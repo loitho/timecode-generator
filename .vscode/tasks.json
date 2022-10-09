@@ -7,9 +7,8 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "-I${workspaceFolder}\\include",
-                //"-L${workspaceFolder}\\include",
                 //"-O3",
+                "-I${workspaceFolder}\\include",
                 "${file}",
                 "${workspaceFolder}/include/*.c",
                 "-o",
