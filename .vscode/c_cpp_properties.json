@@ -4,7 +4,11 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/include"
+                "${workspaceFolder}/include",
+                "c:/programdata/chocolatey/lib/mingw/tools/install/mingw64/lib/gcc/x86_64-w64-mingw32/11.2.0/include",
+                "c:/programdata/chocolatey/lib/mingw/tools/install/mingw64/lib/gcc/x86_64-w64-mingw32/11.2.0/include-fixed",
+                "c:/programdata/chocolatey/lib/mingw/tools/install/mingw64/lib/gcc/x86_64-w64-mingw32/11.2.0/include/ssp",
+                "C:/ProgramData/chocolatey/lib/mingw/tools/install/mingw64/x86_64-w64-mingw32/include"
             ],
             "defines": [
                 "_DEBUG",
