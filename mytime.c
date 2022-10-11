@@ -47,6 +47,17 @@ int main()
     double xs[512];
     double ys[512];
 
+
+  struct timespec tps, tpe;
+  if ((clock_gettime(CLOCK_REALTIME, &tps) != 0)
+  || (clock_gettime(CLOCK_REALTIME, &tpe) != 0)) {
+    perror("clock_gettime");
+    return -1;
+  }
+  printf("%lu s, %lu ns\n", tpe.tv_sec-tps.tv_sec,
+    tpe.tv_nsec-tps.tv_nsec);
+
+
     // double *xs;
     // double *ys;
     // xs = malloc(sizeof(double) * arraysize);
