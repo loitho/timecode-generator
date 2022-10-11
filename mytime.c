@@ -4,8 +4,7 @@
 #include <unistd.h>
 #include "pbPlots.h"
 #include "supportLib.h"
-#include "time.h"
-
+#include "mytime.h"
 
 int draw_image(double *xs, double *ys, int size)
 {
@@ -16,7 +15,7 @@ int draw_image(double *xs, double *ys, int size)
     StringReference *errorMessage = (StringReference *)malloc(sizeof(StringReference));
     success = DrawScatterPlot(canvasReference, 1200, 800, xs, size, ys, size, errorMessage);
 
-    printf("coucou");
+    printf("coucou \n");
     if (success)
     {
         size_t length;
@@ -40,6 +39,9 @@ int main()
 {
     struct timeval *tv_diff;
     struct timeval *tv_started;
+
+    struct timespec *tv_sleep;
+
     unsigned long etime_usec;
     const int arraysize = 512;
     double xs[512];
@@ -51,12 +53,22 @@ int main()
     // ys = malloc(sizeof(double) * arraysize);
 
     int timeoffset;
-    useconds_t usleeptime = 500;
+
+    // Ideal Sleep time is : 1/256 ms = 3.90625 microseconds
+    // Because : you need 256 different values (1 Period in 1 Millisecond)
+    int usleeptime = 0;
+    // int usleeptime = 1000;
 
     tv_diff = malloc(sizeof(*tv_diff));
     tv_started = malloc(sizeof(*tv_started));
+    tv_sleep = malloc(sizeof(time_t) + sizeof(long));
 
-    
+    tv_sleep->tv_sec = 0;
+    tv_sleep->tv_nsec = 4000;
+
+    // clock_nanosleep(CLOCK_MONOTONIC, 0, tv_sleep, NULL);
+    // nanosleep(tv_sleep, NULL);
+
     gettimeofday(tv_started, NULL);
 
     int graphtime = 0;
@@ -76,12 +88,13 @@ int main()
 
         // etime_usec = (tv_diff->tv_usec / 1000);
         // printf("time sec : %d\t time usec  : %d\n", tv_diff->tv_sec, tv_diff->tv_usec);
-        //printf("time milli : %lu \t time usec  : %lu\n", etime_usec - timeoffset, tv_diff->tv_usec);
+        // printf("time milli : %lu \t time usec  : %lu\n", etime_usec - timeoffset, tv_diff->tv_usec);
         // printf("time milli : %lu \t value  : %d\n", etime_usec, DACLookup_FullSine_8Bit[i]);
         // printf("time sec : %lu \n", etime_usec);
 
-        // 1ms
-        usleep(usleeptime);
+        clock_nanosleep(CLOCK_MONOTONIC, 0, tv_sleep, NULL);
+        // nanosleep(tv_sleep, NULL);
+        //  usleep(usleeptime);
     }
 
     for (int i = 0; i < 256; i++)
@@ -93,8 +106,9 @@ int main()
         ys[graphtime] = DACLookup_FullSine_8Bit[i];
         graphtime++;
 
-        // 1ms
-        usleep(usleeptime);
+        clock_nanosleep(CLOCK_MONOTONIC, 0, tv_sleep, NULL);
+        // nanosleep(tv_sleep, NULL);
+        //  usleep(usleeptime);
     }
 
     draw_image(xs, ys, arraysize);
