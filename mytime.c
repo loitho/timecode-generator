@@ -1,10 +1,13 @@
 
 #include <stdio.h>
 #include <sys/time.h>
+#include <stdint.h>
 #include <unistd.h>
 #include "pbPlots.h"
 #include "supportLib.h"
 #include "mytime.h"
+
+#define NANOSECONDS_PER_SECOND   1000000000
 
 int draw_image(double *xs, double *ys, int size)
 {
@@ -41,7 +44,10 @@ int main()
     struct timeval *tv_started;
 
     struct timespec *tv_sleep;
+    
+    uint64_t test;
 
+    
     unsigned long etime_usec;
     const int arraysize = 512;
     double xs[512];
