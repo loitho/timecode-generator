@@ -73,6 +73,11 @@ int main()
 
     int graphtime = 0;
 
+    int sleepcounter = 0;
+    int starttime = 0;
+    // Microseconds
+    int sleepcounter_period = 4;
+
     for (int i = 0; i < 256; i++)
     {
         gettimeofday(tv_diff, NULL);
@@ -91,12 +96,30 @@ int main()
         // printf("time milli : %lu \t time usec  : %lu\n", etime_usec - timeoffset, tv_diff->tv_usec);
         // printf("time milli : %lu \t value  : %d\n", etime_usec, DACLookup_FullSine_8Bit[i]);
         // printf("time sec : %lu \n", etime_usec);
+        // printf("hi\n");
 
-        clock_nanosleep(CLOCK_MONOTONIC, 0, tv_sleep, NULL);
-        // nanosleep(tv_sleep, NULL);
-        //  usleep(usleeptime);
+        // Small value as we get the start point
+        starttime = etime_usec - timeoffset;
+        // Try for active wait
+        int looptime = 0;
+        while (sleepcounter < sleepcounter_period)
+        {
+            gettimeofday(tv_diff, NULL);
+            etime_usec = ((tv_diff->tv_sec - tv_started->tv_sec) * 1000000) + tv_diff->tv_usec;
+            // printf("sleepcounter %ld = etime_usec %ld - timeoffset %ld- starttime %ld\n", sleepcounter, etime_usec, timeoffset, starttime);
+            sleepcounter = etime_usec - timeoffset - starttime;
+            // printf("sleepcounter %ld\n", sleepcounter);
+            looptime++;
+        }
+        // printf("hi2\n");
+        //printf("looptime %ld\n", looptime);
+        sleepcounter = 0;
+        // clock_nanosleep(CLOCK_MONOTONIC, 0, tv_sleep, NULL);
+        //  nanosleep(tv_sleep, NULL);
+        //   usleep(usleeptime);
     }
 
+    sleepcounter = 0;
     for (int i = 0; i < 256; i++)
     {
         gettimeofday(tv_diff, NULL);
@@ -106,9 +129,25 @@ int main()
         ys[graphtime] = DACLookup_FullSine_8Bit[i];
         graphtime++;
 
-        clock_nanosleep(CLOCK_MONOTONIC, 0, tv_sleep, NULL);
-        // nanosleep(tv_sleep, NULL);
-        //  usleep(usleeptime);
+        // Small value as we get the start point
+        starttime = etime_usec - timeoffset;
+        // Try for active wait
+        int looptime = 0;
+        while (sleepcounter < sleepcounter_period)
+        {
+            gettimeofday(tv_diff, NULL);
+            etime_usec = ((tv_diff->tv_sec - tv_started->tv_sec) * 1000000) + tv_diff->tv_usec;
+            // printf("sleepcounter %ld = etime_usec %ld - timeoffset %ld- starttime %ld\n", sleepcounter, etime_usec, timeoffset, starttime);
+            sleepcounter = etime_usec - timeoffset - starttime;
+            // printf("sleepcounter %ld\n", sleepcounter);
+            looptime++;
+        }
+        // printf("hi2\n");
+        //printf("looptime %ld\n", looptime);
+        sleepcounter = 0;
+        // clock_nanosleep(CLOCK_MONOTONIC, 0, tv_sleep, NULL);
+        //  nanosleep(tv_sleep, NULL);
+        //   usleep(usleeptime);
     }
 
     draw_image(xs, ys, arraysize);
