@@ -3,6 +3,13 @@
 int nanosleep(const struct timespec *req, struct timespec *rem);
 int clock_nanosleep(clockid_t clock_id, int flags, const struct timespec *rqtp, struct timespec *rmtp);
 
+typedef enum
+{
+    ZERO,
+    ONE,
+    POS
+} bit_type;
+
 // https://github.com/adafruit/Adafruit_MCP4725/blob/master/examples/sinewave/sinewave.ino
 const int DACLookup_FullSine_8Bit[256] =
     {
