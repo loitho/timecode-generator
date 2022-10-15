@@ -43,7 +43,7 @@ int draw_image(double *xs, double *ys, int size)
     else
     {
         fprintf(stderr, "Error: ");
-        for (int i = 0; i < errorMessage->stringLength; i++)
+        for (unsigned int i = 0; i < errorMessage->stringLength; i++)
         {
             fprintf(stderr, "%c", errorMessage->string[i]);
         }
@@ -139,11 +139,40 @@ void send_binary(bit_type bit,
     }
 }
 
+// shifting four places in binary multiplies or divides by 16
+// Convert Decimal value to BCD
+// 1 2 4 8  10 20 40 80  100 200
+unsigned char decToBcd(unsigned char val)
+{
+    return ((val / 10 * 16) + (val % 10));
+}
+
+uint32_t decToBcd2(uint32_t val)
+{
+    uint32_t out = 0;
+
+    // Case for Day of year, number that need to be stored in 10 bit
+    if ((val / 100) >= 1)
+    {
+        out = val / 100;
+        out = out << 8;
+        
+        val = val % 100;
+    }
+    out = out + ((val / 10 * 16) + (val % 10));
+
+    return out;
+}
+
+unsigned char bcdToDec(unsigned char val)
+{
+    return ((val / 16 * 10) + (val % 16));
+}
+
 int main()
 {
     struct timespec *tv_started;
     struct timespec *tv_diff;
-    int arraysize = 512;
 
     // struct timespec *tv_sleep;
 
@@ -151,6 +180,38 @@ int main()
     // uint64_t etime_nsec;
     double xs[100000];
     double ys[100000];
+
+    unsigned char test = decToBcd(6);
+
+    // 60
+    // number      : 0011 1100 0011 1100
+    // number  bcd : 0000 0000 0110 0000
+
+    // 160
+    // number      : 1010 0000 1010 0000
+    // number  bcd : 0000 0001 0000 0000
+
+    uint32_t number = 366;
+    uint32_t numberp1 = number & 0xFF00;
+    uint32_t numberp2 = number >> 8;
+
+    printf("number Leading text " BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(number));
+
+    printf("numberp1 Leading text " BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(numberp1));
+    printf("numberp2 Leading text " BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(numberp2));
+
+    printf("short DEC to BCD %d\n", decToBcd(number) >> 8);
+    printf("short DEC to BCD %d\n", decToBcd(number));
+
+    printf("long  DEC to BCD %d\n", decToBcd2(number));
+
+    printf("short Leading text " BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(decToBcd(number)));
+    printf("long  Leading text " BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(decToBcd2(number)));
+
+    printf("number      : " BYTE_TO_BINARY_PATTERN " " BYTE_TO_BINARY_PATTERN "\n",
+           BYTE_TO_BINARY(number), BYTE_TO_BINARY(number));
+    printf("number  bcd : " BYTE_TO_BINARY_PATTERN " " BYTE_TO_BINARY_PATTERN "\n",
+           BYTE_TO_BINARY(decToBcd2(number) >> 8), BYTE_TO_BINARY(decToBcd2(number)));
 
     // struct timespec tps, tpe;
     // if ((clock_gettime(CLOCK_REALTIME, &tps) != 0) || (clock_gettime(CLOCK_REALTIME, &tpe) != 0))
@@ -187,82 +248,6 @@ int main()
     send_binary(ZERO, timeoffset, tv_started, tv_diff, xs, ys);
     send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
     send_binary(POS, timeoffset, tv_started, tv_diff, xs, ys);
-    // send_binary(ZERO, timeoffset, tv_started, tv_diff, xs, ys);
-    // send_signal(SIGNAL_MARK, OFFSET_MARK, timeoffset, tv_started, tv_diff, xs, ys);
-    // send_signal(SIGNAL_MARK, OFFSET_MARK, timeoffset, tv_started, tv_diff, xs, ys);
-
-    // send_signal(SIGNAL_MARK, OFFSET_MARK, timeoffset, tv_started, tv_diff, xs, ys);
-    // send_signal(SIGNAL_MARK, OFFSET_MARK, timeoffset, tv_started, tv_diff, xs, ys);
-    // send_signal(SIGNAL_MARK, OFFSET_MARK, timeoffset, tv_started, tv_diff, xs, ys);
-    // send_signal(SIGNAL_MARK, OFFSET_MARK, timeoffset, tv_started, tv_diff, xs, ys);
-
-    // for (int i = 0; i < 256; i++)
-    // {
-    //     // gettimeofday(tv_diff, NULL);
-    //     clock_gettime(CLOCK_REALTIME, tv_diff);
-    //     etime_nsec = ((tv_diff->tv_sec - tv_started->tv_sec) * NANOSECONDS_PER_SECOND) + tv_diff->tv_nsec;
-    //     // Get the real starting value so that the graph starts at 0
-    //     if (i == 0)
-    //         timeoffset = etime_nsec;
-
-    //     // +1 to prevent divide by 0
-    //     xs[graphtime] = (etime_nsec - timeoffset + 1) / DIV_TO_GRAPH_MS;
-    //     ys[graphtime] = DACLookup_FullSine_8Bit[i] * SIGNAL_LOW + OFFSET_LOW;
-    //     graphtime++;
-
-    //     // Try for active wait
-    //     // int looptime = 0;
-    //     // Small value as we get the start point
-    //     starttime = etime_nsec - timeoffset;
-
-    //     while (sleepcounter < sleep_period_nsec)
-    //     {
-    //         // gettimeofday(tv_diff, NULL);
-    //         clock_gettime(CLOCK_REALTIME, tv_diff);
-    //         etime_nsec = ((tv_diff->tv_sec - tv_started->tv_sec) * NANOSECONDS_PER_SECOND) + tv_diff->tv_nsec;
-    //         // printf("sleepcounter %ld = etime_nsec %ld - timeoffset %ld- starttime %ld\n", sleepcounter, etime_nsec, timeoffset, starttime);
-    //         sleepcounter = etime_nsec - timeoffset - starttime;
-    //         // printf("sleepcounter %ld\n", sleepcounter);
-    //         // looptime++;
-    //     }
-
-    //     sleepcounter = 0;
-    // }
-
-    // sleepcounter = 0;
-
-    // for (int i = 0; i < 256; i++)
-    // {
-    //     // gettimeofday(tv_diff, NULL);
-    //     clock_gettime(CLOCK_REALTIME, tv_diff);
-    //     etime_nsec = ((tv_diff->tv_sec - tv_started->tv_sec) * NANOSECONDS_PER_SECOND) + tv_diff->tv_nsec;
-
-    //     xs[graphtime] = (etime_nsec - timeoffset + 1) / DIV_TO_GRAPH_MS;
-    //     ys[graphtime] = DACLookup_FullSine_8Bit[i];
-    //     graphtime++;
-
-    //     // Small value as we get the start point
-    //     starttime = etime_nsec - timeoffset;
-    //     // Try for active wait
-    //     int looptime = 0;
-    //     while (sleepcounter < sleep_period_nsec)
-    //     {
-    //         // gettimeofday(tv_diff, NULL);
-    //         clock_gettime(CLOCK_REALTIME, tv_diff);
-
-    //         etime_nsec = ((tv_diff->tv_sec - tv_started->tv_sec) * NANOSECONDS_PER_SECOND) + tv_diff->tv_nsec;
-    //         // printf("sleepcounter %ld = etime_nsec %ld - timeoffset %ld- starttime %ld\n", sleepcounter, etime_nsec, timeoffset, starttime);
-    //         sleepcounter = etime_nsec - timeoffset - starttime;
-    //         // printf("sleepcounter %ld\n", sleepcounter);
-    //         looptime++;
-    //     }
-    //     // printf("hi2\n");
-    //     // printf("looptime %ld\n", looptime);
-    //     sleepcounter = 0;
-    //     // clock_nanosleep(CLOCK_MONOTONIC, 0, tv_sleep, NULL);
-    //     //  nanosleep(tv_sleep, NULL);
-    //     //   usleep(usleeptime);
-    // }
 
     draw_image(xs, ys, array_iterator);
 }

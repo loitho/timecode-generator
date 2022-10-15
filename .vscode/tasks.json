@@ -37,9 +37,12 @@
                 "-Wall",
                 "-Wextra",
                 "-lm",
+                "-L${workspaceFolder}/include",
+                "-lpbplots",
+                "-Wl,-rpath=${workspaceFolder}/include",
                 "-I${workspaceFolder}/include",
                 "${file}",
-                "${workspaceFolder}/include/*.c",
+                //"${workspaceFolder}/include/*.c",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}"
             ],
