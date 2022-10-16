@@ -12,6 +12,12 @@
 #define NANOSECONDS_PER_SECOND 1000000000
 #define DIV_TO_GRAPH_MS 1000
 
+// Ideal Sleep time is : 1/256 ms = 3.90625 microseconds = 3906.25 nanoseconds
+// Because : you need 256 different values (1 Period in 1 Millisecond)
+// A bit lower to prevent issues
+#define SLEEP_NS 3800;
+//#define SLEEP_NS 3000;
+
 // MARK  => 3Vpp amplitude
 // SPACE => 1Vpp amplitude
 #define SIGNAL_SPACE 0.3
@@ -20,6 +26,8 @@
 
 #define SIGNAL_MARK 1
 #define OFFSET_MARK 0
+
+
 
 int array_iterator = 0;
 
@@ -70,10 +78,11 @@ void send_signal(float signal_type,
     uint64_t sleep_starttime = 0;
     uint64_t etime_nsec = 0;
     uint64_t sleepcounter = 0;
+
     // Ideal Sleep time is : 1/256 ms = 3.90625 microseconds = 3906.25 nanoseconds
     // Because : you need 256 different values (1 Period in 1 Millisecond)
     // A bit lower to prevent issues
-    uint64_t sleep_period_nsec = 3800;
+    uint64_t sleep_period_nsec = SLEEP_NS;
 
     for (int i = 0; i < 256; i++)
     {
@@ -156,7 +165,7 @@ uint32_t decToBcd2(uint32_t val)
     {
         out = val / 100;
         out = out << 8;
-        
+
         val = val % 100;
     }
     out = out + ((val / 10 * 16) + (val % 10));
@@ -181,7 +190,7 @@ int main()
     double xs[100000];
     double ys[100000];
 
-    unsigned char test = decToBcd(6);
+
 
     // 60
     // number      : 0011 1100 0011 1100

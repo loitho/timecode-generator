@@ -36,15 +36,16 @@
                 //"-O3",
                 "-Wall",
                 "-Wextra",
-                "-lm",
                 "-L${workspaceFolder}/include",
-                "-lpbplots",
                 "-Wl,-rpath=${workspaceFolder}/include",
                 "-I${workspaceFolder}/include",
                 "${file}",
                 //"${workspaceFolder}/include/*.c",
                 "-o",
-                "${fileDirname}/${fileBasenameNoExtension}"
+                "${fileDirname}/${fileBasenameNoExtension}",
+                "-lm",
+                "-lpbplots",
+
             ],
             "options": {
                 "cwd": "${fileDirname}"
