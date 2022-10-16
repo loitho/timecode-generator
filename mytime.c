@@ -215,6 +215,7 @@ int autoadjust_sleep(uint64_t *timeoffset,
     float timing;
     float correction;
     uint64_t sleep_period_nsec_corrected;
+    uint64_t etime_nsec = 0;
 
     int i;
 
@@ -222,6 +223,7 @@ int autoadjust_sleep(uint64_t *timeoffset,
     for (int loop = 0; loop < 10; loop++)
     {
         timing = 0;
+        etime_nsec = 0;
         // Send 30 periods
         for (i = 0; i < 10; i++)
         {
@@ -234,13 +236,22 @@ int autoadjust_sleep(uint64_t *timeoffset,
             send_binary(POS, timeoffset, tv_started, tv_diff, xs, ys);
 
             // One position back in the array
+
+            etime_nsec += ((tv_diff->tv_sec - tv_started->tv_sec) * NANOSECONDS_PER_SECOND) + tv_diff->tv_nsec - *timeoffset;
+
             timing += xs[array_iterator - 1] - xs[0];
         }
 
-        printf("Pass %d average timing is %f ...\n", i, timing / i);
+        printf("Pass %d average etime_nsec is %lu ...\n", i, etime_nsec / 1000 / i);
+        int tmp = etime_nsec / 1000 / i;
+        printf("tmp %lu \n", tmp);
+        // printf("Pass %d average timing is %f ...\n", i, timing / i);
 
-        // 10 iteration, of 3 periods, with 1000 microseconds
-        correction = (10 * 3 * 1000) / (timing / i);
+        // 10 iteration, of 3 periods, with 1000 microseconds each
+        // correction = (10 * 3 * 1000) / (timing / i);
+        correction = (10 * 3 * 1000) / (float)tmp;
+        printf("correction %f \n", correction);
+
         sleep_period_nsec_corrected = (correction * sleep_period_nsec);
 
         printf("Correction to apply %0.3f, sleep_period_nsec was : %llu, will be : %llu ...\n", correction, sleep_period_nsec, sleep_period_nsec_corrected);
