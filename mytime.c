@@ -214,6 +214,7 @@ int autoadjust_sleep(uint64_t *timeoffset,
 
     float timing;
     float correction;
+    uint64_t sleep_period_nsec_corrected;
 
     int i;
 
@@ -240,15 +241,15 @@ int autoadjust_sleep(uint64_t *timeoffset,
 
         // 10 iteration, of 3 periods, with 1000 microseconds
         correction = (10 * 3 * 1000) / (timing / i);
-        uint64_t sleep_period_nsec_corrected = correction * sleep_period_nsec;
+        sleep_period_nsec_corrected = (correction * sleep_period_nsec);
 
-        printf("Correction to apply %0.3f, sleep_period_nsec was : %lu, will be : %lu ...\n", correction, sleep_period_nsec, sleep_period_nsec_corrected);
+        printf("Correction to apply %0.3f, sleep_period_nsec was : %llu, will be : %llu ...\n", correction, sleep_period_nsec, sleep_period_nsec_corrected);
         sleep_period_nsec = sleep_period_nsec_corrected;
 
         array_iterator = 0;
     }
 
-    //array_iterator = 0;
+    // array_iterator = 0;
     return 0;
 }
 
