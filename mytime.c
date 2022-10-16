@@ -252,7 +252,9 @@ int autoadjust_sleep(uint64_t *timeoffset,
         correction = (10 * 3 * 1000) / (float)tmp;
         printf("correction %f \n", correction);
 
-        sleep_period_nsec_corrected = (correction * sleep_period_nsec);
+        // For unknown reasons sometimes, on raspberry, the correction has a very strange value
+        if (correction > 0.5)
+            sleep_period_nsec_corrected = (correction * sleep_period_nsec);
 
         printf("Correction to apply %0.3f, sleep_period_nsec was : %llu, will be : %llu ...\n", correction, sleep_period_nsec, sleep_period_nsec_corrected);
         sleep_period_nsec = sleep_period_nsec_corrected;
