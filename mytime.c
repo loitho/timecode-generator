@@ -15,8 +15,8 @@
 // Ideal Sleep time is : 1/256 ms = 3.90625 microseconds = 3906.25 nanoseconds
 // Because : you need 256 different values (1 Period in 1 Millisecond)
 // A bit lower to prevent issues
-#define SLEEP_NS 3800;
-//#define SLEEP_NS 3000;
+//#define SLEEP_NS 3800;
+#define SLEEP_NS 4000;
 
 // MARK  => 3Vpp amplitude
 // SPACE => 1Vpp amplitude
@@ -27,7 +27,10 @@
 #define SIGNAL_MARK 1
 #define OFFSET_MARK 0
 
-
+// Ideal Sleep time is : 1/256 ms = 3.90625 microseconds = 3906.25 nanoseconds
+// Because : you need 256 different values (1 Period in 1 Millisecond)
+// A bit lower to prevent issues
+uint64_t sleep_period_nsec = SLEEP_NS;
 
 int array_iterator = 0;
 
@@ -36,9 +39,36 @@ int draw_image(double *xs, double *ys, int size)
 
     _Bool success;
 
+    ScatterPlotSeries *series = GetDefaultScatterPlotSeriesSettings();
+    series->xs = xs;
+    series->xsLength = size;
+    series->ys = ys;
+    series->ysLength = size;
+    series->linearInterpolation = true;
+    series->lineType = L"solid";
+    series->lineTypeLength = wcslen(series->lineType);
+    series->lineThickness = 2;
+    series->color = GetGray(0.8);
+
+    ScatterPlotSettings *settings = GetDefaultScatterPlotSettings();
+    settings->width = 1200;
+    settings->height = 800;
+    settings->autoBoundaries = true;
+    settings->autoPadding = true;
+    settings->title = L"x^2 - 2";
+    settings->titleLength = wcslen(settings->title);
+    settings->xLabel = L"X axis";
+    settings->xLabelLength = wcslen(settings->xLabel);
+    settings->yLabel = L"microseconds";
+    settings->yLabelLength = wcslen(settings->yLabel);
+    ScatterPlotSeries *s[] = {series};
+    settings->scatterPlotSeries = s;
+    settings->scatterPlotSeriesLength = 1;
+
     RGBABitmapImageReference *canvasReference = CreateRGBABitmapImageReference();
     StringReference *errorMessage = (StringReference *)malloc(sizeof(StringReference));
-    success = DrawScatterPlot(canvasReference, 1200, 800, xs, size, ys, size, errorMessage);
+    // success = DrawScatterPlot(canvasReference, 1200, 800, xs, size, ys, size, errorMessage);
+    success = DrawScatterPlotFromSettings(canvasReference, settings, errorMessage);
 
     printf("coucou \n");
     if (success)
@@ -79,11 +109,6 @@ void send_signal(float signal_type,
     uint64_t etime_nsec = 0;
     uint64_t sleepcounter = 0;
 
-    // Ideal Sleep time is : 1/256 ms = 3.90625 microseconds = 3906.25 nanoseconds
-    // Because : you need 256 different values (1 Period in 1 Millisecond)
-    // A bit lower to prevent issues
-    uint64_t sleep_period_nsec = SLEEP_NS;
-
     for (int i = 0; i < 256; i++)
     {
         // gettimeofday(tv_diff, NULL);
@@ -93,7 +118,7 @@ void send_signal(float signal_type,
         if (array_iterator == 0)
             *timeoffset = etime_nsec;
 
-        // +1 to prevent divide by 0
+        // +1ns to prevent divide by 0
         xs[array_iterator] = (etime_nsec - *timeoffset + 1) / DIV_TO_GRAPH_MS;
         ys[array_iterator] = DACLookup_FullSine_8Bit[i] * signal_type + signal_offset;
         array_iterator++;
@@ -178,6 +203,55 @@ unsigned char bcdToDec(unsigned char val)
     return ((val / 16 * 10) + (val % 16));
 }
 
+// We're going to send test signal, calculate the duration for sending a certain amount
+// And we'll adjust the active wait variable, sleep_period_nsec based on that
+int autoadjust_sleep(uint64_t *timeoffset,
+                     struct timespec *tv_started,
+                     struct timespec *tv_diff,
+                     double *xs, double *ys)
+{
+    printf("adjusting timing ...\n");
+
+    float timing;
+    float correction;
+
+    int i;
+
+    // How many time we want to adjust the timing
+    for (int loop = 0; loop < 10; loop++)
+    {
+        timing = 0;
+        // Send 30 periods
+        for (i = 0; i < 10; i++)
+        {
+            array_iterator = 0;
+            *timeoffset = 0;
+
+            // Each send command is 10 periods of 1 ms, so 10ms
+            send_binary(ZERO, timeoffset, tv_started, tv_diff, xs, ys);
+            send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
+            send_binary(POS, timeoffset, tv_started, tv_diff, xs, ys);
+
+            // One position back in the array
+            timing += xs[array_iterator - 1] - xs[0];
+        }
+
+        printf("Pass %d average timing is %f ...\n", i, timing / i);
+
+        // 10 iteration, of 3 periods, with 1000 microseconds
+        correction = (10 * 3 * 1000) / (timing / i);
+        uint64_t sleep_period_nsec_corrected = correction * sleep_period_nsec;
+
+        printf("Correction to apply %0.3f, sleep_period_nsec was : %lu, will be : %lu ...\n", correction, sleep_period_nsec, sleep_period_nsec_corrected);
+        sleep_period_nsec = sleep_period_nsec_corrected;
+
+        array_iterator = 0;
+    }
+
+    //array_iterator = 0;
+    return 0;
+}
+
 int main()
 {
     struct timespec *tv_started;
@@ -189,8 +263,6 @@ int main()
     // uint64_t etime_nsec;
     double xs[100000];
     double ys[100000];
-
-
 
     // 60
     // number      : 0011 1100 0011 1100
@@ -253,6 +325,10 @@ int main()
     // // Because : you need 256 different values (1 Period in 1 Millisecond)
     // // A bit lower to prevent issues
     // uint64_t sleep_period_nsec = 3800;
+
+    autoadjust_sleep(timeoffset, tv_started, tv_diff, xs, ys);
+
+    clock_gettime(CLOCK_REALTIME, tv_started);
 
     send_binary(ZERO, timeoffset, tv_started, tv_diff, xs, ys);
     send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
