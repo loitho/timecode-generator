@@ -16,7 +16,7 @@
 // Because : you need 256 different values (1 Period in 1 Millisecond)
 // A bit lower to prevent issues
 //#define SLEEP_NS 3800;
-#define SLEEP_NS 4000;
+#define SLEEP_NS 4000
 
 // MARK  => 3Vpp amplitude
 // SPACE => 1Vpp amplitude
@@ -214,7 +214,7 @@ int autoadjust_sleep(uint64_t *timeoffset,
 
     float timing;
     float correction;
-    uint64_t sleep_period_nsec_corrected;
+    uint64_t sleep_period_nsec_corrected = 0;
     uint64_t etime_nsec = 0;
 
     int i;
@@ -242,25 +242,26 @@ int autoadjust_sleep(uint64_t *timeoffset,
             timing += xs[array_iterator - 1] - xs[0];
         }
 
-        printf("Pass %d average etime_nsec is %lu ...\n", i, etime_nsec / 1000 / i);
+        //printf("Pass %d average etime_nsec is %lu ...\n", i, etime_nsec / 1000 / i);
         int tmp = etime_nsec / 1000 / i;
-        printf("tmp %lu \n", tmp);
+        //printf("tmp %lu \n", tmp);
         // printf("Pass %d average timing is %f ...\n", i, timing / i);
 
         // 10 iteration, of 3 periods, with 1000 microseconds each
         // correction = (10 * 3 * 1000) / (timing / i);
         correction = (10 * 3 * 1000) / (float)tmp;
-        printf("correction %f \n", correction);
+        //printf("correction %f \n", correction);
 
         // For unknown reasons sometimes, on raspberry, the correction has a very strange value
         if (correction > 0.5)
             sleep_period_nsec_corrected = (correction * sleep_period_nsec);
 
-        printf("Correction to apply %0.3f, sleep_period_nsec was : %llu, will be : %llu ...\n", correction, sleep_period_nsec, sleep_period_nsec_corrected);
+        //printf("Correction to apply %0.3f, sleep_period_nsec was : %llu, will be : %llu ...\n", correction, sleep_period_nsec, sleep_period_nsec_corrected);
         sleep_period_nsec = sleep_period_nsec_corrected;
 
         array_iterator = 0;
     }
+    printf("Sleep_period_nsec was %d :, will be : %llu ...\n", SLEEP_NS, sleep_period_nsec);
 
     // array_iterator = 0;
     return 0;
