@@ -9,9 +9,8 @@
 #include "supportLib.h"
 #include "mytime.h"
 
-
 #ifdef __arm__
-    // do something
+// do something
 #endif
 
 #define GRAPH 1
@@ -42,11 +41,6 @@
 // We want the difference between the big and the small period to get the offset
 #define OFFSET_SPACE ((2048 - (2048 * 0.3)) * 2 / 3)
 
-//#define OFFSET_SPACE 955
-// - ((2048 * 2 / 3) * SIGNAL_SPACE))
-
-//#define OFFSET_SPACE 1365
-
 // Ideal Sleep time is : 1/256 ms = 3.90625 microseconds = 3906.25 nanoseconds
 // Because : you need 256 different values (1 Period in 1 Millisecond)
 // A bit lower to prevent issues
@@ -54,7 +48,7 @@ uint64_t sleep_period_nsec = SLEEP_NS;
 
 int array_iterator = 0;
 
-char timeframe[100];
+char timeframe[100] = {0};
 
 int draw_image(double *xs, double *ys, int size)
 {
@@ -205,6 +199,8 @@ unsigned char decToBcd(unsigned char val)
     return ((val / 10 * 16) + (val % 10));
 }
 
+// Decimal to BCD (Binary Coded Decimal)
+// Here the version for 2 bytes
 uint32_t decToBcd2(uint32_t val)
 {
     uint32_t out = 0;
@@ -292,6 +288,7 @@ int autoadjust_sleep(uint64_t *timeoffset,
 }
 
 // Configuration Position Identifier, every 10 bits
+// Configure static bits
 void set_pos_ident()
 {
     timeframe[0] = POS;
@@ -303,40 +300,50 @@ void set_pos_ident()
     }
 }
 
-void set_timeframe_s(int value)
+void set_timeframe(int value, time_type type, pos_type pos_timeframe)
 {
-
-    int pos_timeframe = 1;
     int value_bcd = decToBcd2(value);
 
     printf("value : %d, bcd: %d\n", value, value_bcd);
 
     // Read bit per bit the value
-    for (int i = 0; i < 7; i++)
+    for (unsigned int i = 0; i < type; i++)
     {
 
-        if (pos_timeframe == 5)
-        {
-            timeframe[5] = 0;
+        // If we're at the 4th bit or 8th bit, we jump the next value in array to keep it at 0 or POS
+        // https://en.wikipedia.org/w/index.php?title=IRIG_timecode#IRIG_timecode
+        if ((i != 0) && (i % 4 == 0))
             pos_timeframe++;
-        }
 
         timeframe[pos_timeframe] = (value_bcd >> i) & 1;
         pos_timeframe++;
 
-        printf("num : %d\n", (value_bcd >> i) & 1);
+        printf("%d", (value_bcd >> i) & 1);
     }
+    printf("\n");
 }
 
-// void set_timeframe_mn(int value)
-// {
-// }
-// void set_timeframe_h(int value)
-// {
-// }
-// void set_timeframe_doy(int value)
-// {
-// }
+void set_sbs(uint16_t sbs_value)
+{
+    int pos_timeframe = 80;
+
+    printf("sbs value : %d\n", sbs_value);
+
+    // Read bit per bit the value
+    for (unsigned int i = 0; i < 16; i++)
+    {
+        // If we're at the 9th bit, we jump the next value in array to keep it at POS P9
+        // https://en.wikipedia.org/w/index.php?title=IRIG_timecode#IRIG_timecode
+        if ((i == 9))
+            pos_timeframe++;
+
+        timeframe[pos_timeframe] = (sbs_value >> i) & 1;
+        pos_timeframe++;
+
+        printf("%d", (sbs_value >> i) & 1);
+    }
+    printf("\n");
+}
 
 void generate_data(struct timespec *tv_started)
 {
@@ -356,7 +363,19 @@ void generate_data(struct timespec *tv_started)
 
     set_pos_ident();
 
-    set_timeframe_s(ts.tm_sec);
+    set_timeframe(ts.tm_sec, SEC, POS_SEC);
+    set_timeframe(ts.tm_min, MIN, POS_MIN);
+    set_timeframe(ts.tm_hour, HOUR, POS_HOUR);
+    set_timeframe(ts.tm_yday, YDAY, POS_YDAY);
+    set_timeframe(ts.tm_wday, WDAY, POS_WDAY);
+    // % 100 as tm_year is number of years since 1900
+    set_timeframe(ts.tm_year % 100, YEAR, POS_YEAR);
+    // tm_mon counts from 0
+    set_timeframe(ts.tm_mon + 1, MONTH, POS_MONTH);
+    set_timeframe(ts.tm_mday, MDAY, POS_MDAY);
+
+    set_sbs(ts.tm_sec + (ts.tm_min * 60) + (ts.tm_hour * 60 * 60));
+
     // set_timeframe_mn(ts.tm_min);
     // set_timeframe_h(ts.tm_hour);
     // set_timeframe_doy(ts.tm_yday);
@@ -382,7 +401,7 @@ int main()
     // number      : 1010 0000 1010 0000
     // number  bcd : 0000 0001 0000 0000
 
-    uint32_t number = 54;
+    uint32_t number = 354;
     uint32_t numberp1 = number & 0xFF00;
     uint32_t numberp2 = number >> 8;
 
@@ -427,12 +446,10 @@ int main()
     // send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
     // send_binary(POS, timeoffset, tv_started, tv_diff, xs, ys);
 
-
-
-NE PAS OUBLIER LE BAUD RATE A 400 000
+// NE PAS OUBLIER LE BAUD RATE A 400 000
 #ifdef __arm__
     // do something
-    int piHiPri (int priority);
+    int piHiPri(int priority);
 #endif
 
     draw_image(xs, ys, array_iterator);

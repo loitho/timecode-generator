@@ -9,22 +9,48 @@ int clock_nanosleep(clockid_t clock_id, int flags, const struct timespec *rqtp, 
 // printf("m: "BYTE_TO_BINARY_PATTERN" "BYTE_TO_BINARY_PATTERN"\n",
 //   BYTE_TO_BINARY(m>>8), BYTE_TO_BINARY(m));
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c %c%c%c%c"
-#define BYTE_TO_BINARY(byte)  \
-  (byte & 0x80 ? '1' : '0'), \
-  (byte & 0x40 ? '1' : '0'), \
-  (byte & 0x20 ? '1' : '0'), \
-  (byte & 0x10 ? '1' : '0'), \
-  (byte & 0x08 ? '1' : '0'), \
-  (byte & 0x04 ? '1' : '0'), \
-  (byte & 0x02 ? '1' : '0'), \
-  (byte & 0x01 ? '1' : '0') 
+#define BYTE_TO_BINARY(byte)     \
+  (byte & 0x80 ? '1' : '0'),     \
+      (byte & 0x40 ? '1' : '0'), \
+      (byte & 0x20 ? '1' : '0'), \
+      (byte & 0x10 ? '1' : '0'), \
+      (byte & 0x08 ? '1' : '0'), \
+      (byte & 0x04 ? '1' : '0'), \
+      (byte & 0x02 ? '1' : '0'), \
+      (byte & 0x01 ? '1' : '0')
 
 typedef enum
 {
-    ZERO,
-    ONE,
-    POS
+  ZERO,
+  ONE,
+  POS
 } bit_type;
+
+// Number of bits to put in the Array
+typedef enum
+{
+  SEC = 7,
+  MIN = 8,
+  HOUR = 6,
+  YDAY = 10,
+  WDAY = 3,
+  YEAR = 8,
+  MONTH = 5,
+  MDAY = 6
+} time_type;
+
+// Pos
+typedef enum
+{
+  POS_SEC = 1,
+  POS_MIN = 10,
+  POS_HOUR = 20,
+  POS_YDAY = 30,
+  POS_WDAY = 44,
+  POS_YEAR = 50,
+  POS_MONTH = 60,
+  POS_MDAY = 70
+} pos_type;
 
 // https://github.com/adafruit/Adafruit_MCP4725/blob/master/examples/sinewave/sinewave.ino
 const int DACLookup_FullSine_8Bit[256] =
