@@ -10,7 +10,9 @@
 #include "mytime.h"
 
 #ifdef __arm__
-// do something
+#include <wiringPiI2C.h>
+#include <stdio.h>
+#include <wiringPi.h>
 #endif
 
 #define GRAPH 1
@@ -255,10 +257,9 @@ int autoadjust_sleep(uint64_t *timeoffset,
             send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
             send_binary(POS, timeoffset, tv_started, tv_diff, xs, ys);
 
-            // One position back in the array
-
             etime_nsec += ((tv_diff->tv_sec - tv_started->tv_sec) * NANOSECONDS_PER_SECOND) + tv_diff->tv_nsec - *timeoffset;
 
+            // One position back in the array
             timing += xs[array_iterator - 1] - xs[0];
         }
 
@@ -357,10 +358,7 @@ void generate_data(struct timespec *tv_started)
     strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
     printf("%s\n", buf);
 
-    // int s = tv_started->tv_sec % 60;
-    // int m = (tv_started->tv_sec / 60) % 60;
-    // int h = (tv_started->tv_sec / 3600) % 24;
-
+    // Position All default values
     set_pos_ident();
 
     set_timeframe(ts.tm_sec, SEC, POS_SEC);
@@ -368,6 +366,7 @@ void generate_data(struct timespec *tv_started)
     set_timeframe(ts.tm_hour, HOUR, POS_HOUR);
     set_timeframe(ts.tm_yday, YDAY, POS_YDAY);
     set_timeframe(ts.tm_wday, WDAY, POS_WDAY);
+
     // % 100 as tm_year is number of years since 1900
     set_timeframe(ts.tm_year % 100, YEAR, POS_YEAR);
     // tm_mon counts from 0
@@ -375,10 +374,6 @@ void generate_data(struct timespec *tv_started)
     set_timeframe(ts.tm_mday, MDAY, POS_MDAY);
 
     set_sbs(ts.tm_sec + (ts.tm_min * 60) + (ts.tm_hour * 60 * 60));
-
-    // set_timeframe_mn(ts.tm_min);
-    // set_timeframe_h(ts.tm_hour);
-    // set_timeframe_doy(ts.tm_yday);
 }
 
 int main()
@@ -401,27 +396,27 @@ int main()
     // number      : 1010 0000 1010 0000
     // number  bcd : 0000 0001 0000 0000
 
-    uint32_t number = 354;
-    uint32_t numberp1 = number & 0xFF00;
-    uint32_t numberp2 = number >> 8;
+    // uint32_t number = 354;
+    // uint32_t numberp1 = number & 0xFF00;
+    // uint32_t numberp2 = number >> 8;
 
-    printf("number Leading text " BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(number));
+    // printf("number Leading text " BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(number));
 
-    printf("numberp1 Leading text " BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(numberp1));
-    printf("numberp2 Leading text " BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(numberp2));
+    // printf("numberp1 Leading text " BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(numberp1));
+    // printf("numberp2 Leading text " BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(numberp2));
 
-    printf("short DEC to BCD %d\n", decToBcd(number) >> 8);
-    printf("short DEC to BCD %d\n", decToBcd(number));
+    // printf("short DEC to BCD %d\n", decToBcd(number) >> 8);
+    // printf("short DEC to BCD %d\n", decToBcd(number));
 
-    printf("long  DEC to BCD %d\n", decToBcd2(number));
+    // printf("long  DEC to BCD %d\n", decToBcd2(number));
 
-    printf("short Leading text " BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(decToBcd(number)));
-    printf("long  Leading text " BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(decToBcd2(number)));
+    // printf("short Leading text " BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(decToBcd(number)));
+    // printf("long  Leading text " BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(decToBcd2(number)));
 
-    printf("number      : " BYTE_TO_BINARY_PATTERN " " BYTE_TO_BINARY_PATTERN "\n",
-           BYTE_TO_BINARY(number), BYTE_TO_BINARY(number));
-    printf("number  bcd : " BYTE_TO_BINARY_PATTERN " " BYTE_TO_BINARY_PATTERN "\n",
-           BYTE_TO_BINARY(decToBcd2(number) >> 8), BYTE_TO_BINARY(decToBcd2(number)));
+    // printf("number      : " BYTE_TO_BINARY_PATTERN " " BYTE_TO_BINARY_PATTERN "\n",
+    //        BYTE_TO_BINARY(number), BYTE_TO_BINARY(number));
+    // printf("number  bcd : " BYTE_TO_BINARY_PATTERN " " BYTE_TO_BINARY_PATTERN "\n",
+    //        BYTE_TO_BINARY(decToBcd2(number) >> 8), BYTE_TO_BINARY(decToBcd2(number)));
 
     uint64_t *timeoffset;
     timeoffset = malloc(sizeof(*timeoffset));
@@ -448,8 +443,17 @@ int main()
 
 // NE PAS OUBLIER LE BAUD RATE A 400 000
 #ifdef __arm__
-    // do something
-    int piHiPri(int priority);
+    // Max Priority
+    int piHiPri(int 99);
+
+    int fd, output;
+    fd = wiringPiI2CSetup(0x62); // 0x62 is devld for MCP4725
+
+    printf("fd is: %d \n", fd);
+
+    int value = 1365;
+    wiringPiI2CWriteReg8((value >> 8) & 0xFF, value & 0xFF);
+
 #endif
 
     draw_image(xs, ys, array_iterator);

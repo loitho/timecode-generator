@@ -26,20 +26,11 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/include",
-                // "${workspaceFolder}/include/Adafruit_BusIO",
-                // "${workspaceFolder}/include/Adafruit_MCP4725",
                 "/usr/include/x86_64-linux-gnu",
                 "/usr/lib/gcc/x86_64-linux-gnu/6/include",
                 "/usr/lib/gcc/x86_64-linux-gnu/6/include-fixed",
                 "/usr/include",
-                "/usr/local/include",
-                // "/usr/include/c++/6",
-                // "/usr/include/x86_64-linux-gnu/c++/6",
-                // "/usr/share/arduino/libraries/Wire",
-                // "/usr/share/arduino/libraries/SPI",
-                // "/usr/share/arduino/hardware/arduino/cores/arduino",
-                // "/usr/lib/avr/include",
-                // "/usr/share/arduino/hardware/arduino/variants/standard"
+                "/usr/local/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

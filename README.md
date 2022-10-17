@@ -4,7 +4,7 @@ afnor nfs 87500 and SMPTE timecode generator
 
 https://github.com/InductiveComputerScience/pbPlots
 
-
+## Wiringpi lib
 cd /tmp
 wget https://project-downloads.drogon.net/wiringpi-latest.deb
 sudo dpkg -i wiringpi-latest.deb
