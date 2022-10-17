@@ -2,7 +2,11 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <iostream>
+#include <new>
+
 #include "pbPlots.h"
 #include "supportLib.h"
 #include "mytime.h"
@@ -18,14 +22,28 @@
 //#define SLEEP_NS 3800;
 #define SLEEP_NS 4000
 
-// MARK  => 3Vpp amplitude
-// SPACE => 1Vpp amplitude
-#define SIGNAL_SPACE 0.3
-// This offset allows for the amplitude to have the proper Y (vertical, voltage) Offset
-#define OFFSET_SPACE (2048 - (2048 * SIGNAL_SPACE))
+// MCP4725 uses values from 0 to 4095.
+// 0    => 0   Volts
+// 4095 => 3.3 Volts
+// But AFNOR Works with 2.2 volts peak, so we need to multiply by 2/3
 
-#define SIGNAL_MARK 1
+// MARK  => 2.17  Vpp amplitude
+// SPACE => 0.688 Vpp amplitude
+#define SIGNAL_MARK (1.0 * 2 / 3)
 #define OFFSET_MARK 0
+
+//#define SIGNAL_SPACE (0.3 * 2 / 3)
+#define SIGNAL_SPACE (0.3 * 2 / 3)
+// This offset allows for the amplitude to have the proper Y (vertical, voltage) Offset
+// Half of the total range (4096 values is 2048)
+// We want the difference between the big and the small period to get the offset
+#define OFFSET_SPACE ((2048 - (2048 * 0.3)) * 2 / 3)
+
+//#define OFFSET_SPACE 955
+// - ((2048 * 2 / 3) * SIGNAL_SPACE))
+
+//#define OFFSET_SPACE 1365
+
 
 // Ideal Sleep time is : 1/256 ms = 3.90625 microseconds = 3906.25 nanoseconds
 // Because : you need 256 different values (1 Period in 1 Millisecond)
@@ -33,6 +51,8 @@
 uint64_t sleep_period_nsec = SLEEP_NS;
 
 int array_iterator = 0;
+
+char timeframe[100];
 
 int draw_image(double *xs, double *ys, int size)
 {
@@ -57,9 +77,9 @@ int draw_image(double *xs, double *ys, int size)
     settings->autoPadding = true;
     settings->title = L"x^2 - 2";
     settings->titleLength = wcslen(settings->title);
-    settings->xLabel = L"X axis";
+    settings->xLabel = L"microseconds";
     settings->xLabelLength = wcslen(settings->xLabel);
-    settings->yLabel = L"microseconds";
+    settings->yLabel = L"value";
     settings->yLabelLength = wcslen(settings->yLabel);
     ScatterPlotSeries *s[] = {series};
     settings->scatterPlotSeries = s;
@@ -120,7 +140,9 @@ void send_signal(float signal_type,
 
         // +1ns to prevent divide by 0
         xs[array_iterator] = (etime_nsec - *timeoffset + 1) / DIV_TO_GRAPH_MS;
-        ys[array_iterator] = DACLookup_FullSine_8Bit[i] * signal_type + signal_offset;
+        //ys[array_iterator] = (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset);
+        ys[array_iterator] = (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset) / 4095 * 3.3;
+        //ys[array_iterator] = (DACLookup_FullSine_8Bit[i] * signal_type) / 3.3 * 2.2;
         array_iterator++;
 
         sleep_starttime = etime_nsec - *timeoffset;
@@ -242,21 +264,21 @@ int autoadjust_sleep(uint64_t *timeoffset,
             timing += xs[array_iterator - 1] - xs[0];
         }
 
-        //printf("Pass %d average etime_nsec is %lu ...\n", i, etime_nsec / 1000 / i);
+        // printf("Pass %d average etime_nsec is %lu ...\n", i, etime_nsec / 1000 / i);
         int tmp = etime_nsec / 1000 / i;
-        //printf("tmp %lu \n", tmp);
-        // printf("Pass %d average timing is %f ...\n", i, timing / i);
+        // printf("tmp %lu \n", tmp);
+        //  printf("Pass %d average timing is %f ...\n", i, timing / i);
 
         // 10 iteration, of 3 periods, with 1000 microseconds each
         // correction = (10 * 3 * 1000) / (timing / i);
         correction = (10 * 3 * 1000) / (float)tmp;
-        //printf("correction %f \n", correction);
+        // printf("correction %f \n", correction);
 
         // For unknown reasons sometimes, on raspberry, the correction has a very strange value
         if (correction > 0.5)
             sleep_period_nsec_corrected = (correction * sleep_period_nsec);
 
-        //printf("Correction to apply %0.3f, sleep_period_nsec was : %llu, will be : %llu ...\n", correction, sleep_period_nsec, sleep_period_nsec_corrected);
+        // printf("Correction to apply %0.3f, sleep_period_nsec was : %llu, will be : %llu ...\n", correction, sleep_period_nsec, sleep_period_nsec_corrected);
         sleep_period_nsec = sleep_period_nsec_corrected;
 
         array_iterator = 0;
@@ -265,6 +287,77 @@ int autoadjust_sleep(uint64_t *timeoffset,
 
     // array_iterator = 0;
     return 0;
+}
+
+// Configuration Position Identifier, every 10 bits
+void set_pos_ident()
+{
+    timeframe[0] = POS;
+
+    for (int i = 0; i < 100; i++)
+    {
+        if (i % 10 == 9)
+            timeframe[i] = POS;
+    }
+}
+
+void set_timeframe_s(int value)
+{
+
+    int pos_timeframe = 1;
+    int value_bcd = decToBcd2(value);
+
+    printf("value : %d, bcd: %d\n", value, value_bcd);
+
+    // Read bit per bit the value
+    for (int i = 0; i < 7; i++)
+    {
+
+        if (pos_timeframe == 5)
+        {
+            timeframe[5] = 0;
+            pos_timeframe++;
+        }
+
+        timeframe[pos_timeframe] = (value_bcd >> i) & 1;
+        pos_timeframe++;
+
+        printf("num : %d\n", (value_bcd >> i) & 1);
+    }
+}
+
+// void set_timeframe_mn(int value)
+// {
+// }
+// void set_timeframe_h(int value)
+// {
+// }
+// void set_timeframe_doy(int value)
+// {
+// }
+
+void generate_data(struct timespec *tv_started)
+{
+    // https://stackoverflow.com/questions/19377396/c-get-day-of-year-from-date
+    time_t rawtime = tv_started->tv_sec;
+    struct tm ts;
+    char buf[80];
+
+    // Format time, "ddd yyyy-mm-dd hh:mm:ss zzz"
+    ts = *localtime(&rawtime);
+    strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
+    printf("%s\n", buf);
+
+    // int s = tv_started->tv_sec % 60;
+    // int m = (tv_started->tv_sec / 60) % 60;
+    // int h = (tv_started->tv_sec / 3600) % 24;
+
+    set_pos_ident();
+
+    set_timeframe_s(ts.tm_sec);
+    // set_timeframe_mn(ts.tm_min);
+    // set_timeframe_h(ts.tm_hour);
+    // set_timeframe_doy(ts.tm_yday);
 }
 
 int main()
@@ -287,7 +380,7 @@ int main()
     // number      : 1010 0000 1010 0000
     // number  bcd : 0000 0001 0000 0000
 
-    uint32_t number = 366;
+    uint32_t number = 54;
     uint32_t numberp1 = number & 0xFF00;
     uint32_t numberp2 = number >> 8;
 
@@ -309,45 +402,31 @@ int main()
     printf("number  bcd : " BYTE_TO_BINARY_PATTERN " " BYTE_TO_BINARY_PATTERN "\n",
            BYTE_TO_BINARY(decToBcd2(number) >> 8), BYTE_TO_BINARY(decToBcd2(number)));
 
-    // struct timespec tps, tpe;
-    // if ((clock_gettime(CLOCK_REALTIME, &tps) != 0) || (clock_gettime(CLOCK_REALTIME, &tpe) != 0))
-    // {
-    //     perror("clock_gettime");
-    //     return -1;
-    // }
-    // printf("%lu s, %lu ns\n", tpe.tv_sec - tps.tv_sec,
-    //        tpe.tv_nsec - tps.tv_nsec);
 
-    // double *xs;
-    // double *ys;
-    // xs = malloc(sizeof(double) * arraysize);
-    // ys = malloc(sizeof(double) * arraysize);
 
     uint64_t *timeoffset;
-    timeoffset = malloc(sizeof(*timeoffset));
+    timeoffset = new uint64_t;
 
-    tv_diff = malloc(sizeof(*tv_diff));
-    tv_started = malloc(sizeof(*tv_started));
+    tv_diff = new timespec;
+    tv_started = new timespec;
 
     clock_gettime(CLOCK_REALTIME, tv_started);
 
-    // int graphtime = 0;
-
-    // uint64_t starttime = 0;
-
-    // uint64_t sleepcounter = 0;
-    // // Ideal Sleep time is : 1/256 ms = 3.90625 microseconds = 3906.25 nanoseconds
-    // // Because : you need 256 different values (1 Period in 1 Millisecond)
-    // // A bit lower to prevent issues
-    // uint64_t sleep_period_nsec = 3800;
 
     autoadjust_sleep(timeoffset, tv_started, tv_diff, xs, ys);
 
     clock_gettime(CLOCK_REALTIME, tv_started);
 
+    generate_data(tv_started);
+
+    // send_data(ts.tm_sec, 8, timeoffset, tv_started, tv_diff, xs, ys)
+
     send_binary(ZERO, timeoffset, tv_started, tv_diff, xs, ys);
     send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
-    send_binary(POS, timeoffset, tv_started, tv_diff, xs, ys);
+    // send_binary(POS, timeoffset, tv_started, tv_diff, xs, ys);
+    // send_binary(ZERO, timeoffset, tv_started, tv_diff, xs, ys);
+    // send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
+    // send_binary(POS, timeoffset, tv_started, tv_diff, xs, ys);
 
     draw_image(xs, ys, array_iterator);
 }

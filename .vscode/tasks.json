@@ -34,6 +34,7 @@
                 "-fdiagnostics-color=always",
                 "-g",
                 //"-O3",
+                "-xc++",
                 "-Wall",
                 "-Wextra",
                 "-L${workspaceFolder}/include",
@@ -45,7 +46,7 @@
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-lm",
                 "-lpbplots",
-
+                "-lstdc++",
             ],
             "options": {
                 "cwd": "${fileDirname}"
