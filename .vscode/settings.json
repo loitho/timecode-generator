@@ -1,7 +1,5 @@
 {
     "files.associations": {
-        "pbplots.h": "c",
-        "stdio.h": "c",
-        "iostream": "c"
-    },
+        "supportlib.h": "c"
+    }
 }

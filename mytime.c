@@ -4,12 +4,15 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <iostream>
-#include <new>
 
 #include "pbPlots.h"
 #include "supportLib.h"
 #include "mytime.h"
+
+
+#ifdef __arm__
+    // do something
+#endif
 
 #define GRAPH 1
 
@@ -43,7 +46,6 @@
 // - ((2048 * 2 / 3) * SIGNAL_SPACE))
 
 //#define OFFSET_SPACE 1365
-
 
 // Ideal Sleep time is : 1/256 ms = 3.90625 microseconds = 3906.25 nanoseconds
 // Because : you need 256 different values (1 Period in 1 Millisecond)
@@ -140,9 +142,9 @@ void send_signal(float signal_type,
 
         // +1ns to prevent divide by 0
         xs[array_iterator] = (etime_nsec - *timeoffset + 1) / DIV_TO_GRAPH_MS;
-        //ys[array_iterator] = (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset);
+        // ys[array_iterator] = (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset);
         ys[array_iterator] = (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset) / 4095 * 3.3;
-        //ys[array_iterator] = (DACLookup_FullSine_8Bit[i] * signal_type) / 3.3 * 2.2;
+        // ys[array_iterator] = (DACLookup_FullSine_8Bit[i] * signal_type) / 3.3 * 2.2;
         array_iterator++;
 
         sleep_starttime = etime_nsec - *timeoffset;
@@ -402,16 +404,13 @@ int main()
     printf("number  bcd : " BYTE_TO_BINARY_PATTERN " " BYTE_TO_BINARY_PATTERN "\n",
            BYTE_TO_BINARY(decToBcd2(number) >> 8), BYTE_TO_BINARY(decToBcd2(number)));
 
-
-
     uint64_t *timeoffset;
-    timeoffset = new uint64_t;
+    timeoffset = malloc(sizeof(*timeoffset));
 
-    tv_diff = new timespec;
-    tv_started = new timespec;
+    tv_diff = malloc(sizeof(*tv_diff));
+    tv_started = malloc(sizeof(*tv_started));
 
     clock_gettime(CLOCK_REALTIME, tv_started);
-
 
     autoadjust_sleep(timeoffset, tv_started, tv_diff, xs, ys);
 
@@ -427,6 +426,14 @@ int main()
     // send_binary(ZERO, timeoffset, tv_started, tv_diff, xs, ys);
     // send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
     // send_binary(POS, timeoffset, tv_started, tv_diff, xs, ys);
+
+
+
+NE PAS OUBLIER LE BAUD RATE A 400 000
+#ifdef __arm__
+    // do something
+    int piHiPri (int priority);
+#endif
 
     draw_image(xs, ys, array_iterator);
 }

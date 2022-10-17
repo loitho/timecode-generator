@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
-g++ -c -Wall -fpic -O3 *.c
-g++ -shared -o libpbplots.so *.o
+gcc -c -Wall -fpic -O3 *.c
+gcc -shared -o libpbplots.so *.o
