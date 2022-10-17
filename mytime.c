@@ -452,7 +452,7 @@ int main()
     printf("fd is: %d \n", fd);
 
     int value = 1365;
-    wiringPiI2CWriteReg8((value >> 8) & 0xFF, value & 0xFF);
+    wiringPiI2CWriteReg8(fd, (value >> 8) & 0xFF, value & 0xFF);
 
 #endif
 
