@@ -444,7 +444,9 @@ int main()
 // NE PAS OUBLIER LE BAUD RATE A 400 000
 #ifdef __arm__
     // Max Priority
-    int piHiPri(99);
+    
+    if (piHiPri(99))
+        printf("error with pihipri");
 
     int fd, output;
     fd = wiringPiI2CSetup(0x62); // 0x62 is devld for MCP4725
