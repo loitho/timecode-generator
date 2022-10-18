@@ -17,4 +17,4 @@ sudo nano /boot/config.txt
 Find the line containing dtparam=i2c_arm=on
 Add i2c_arm_baudrate=<new speed> (Separate with a Comma)
 dtparam=i2c_arm=on,i2c_arm_baudrate=400000
-
+dtparam=i2c_arm=on,i2c_arm_baudrate=3400000
