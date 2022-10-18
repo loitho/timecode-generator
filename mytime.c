@@ -460,6 +460,7 @@ int main()
 
     // send_binary(ZERO, timeoffset, tv_started, tv_diff, xs, ys);
     // send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
+    close(i2c_fd);
 
 #ifdef GRAPH
     draw_image(xs, ys, array_iterator);
