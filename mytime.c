@@ -49,8 +49,8 @@
 uint64_t sleep_period_nsec = SLEEP_NS;
 
 int array_iterator = 0;
-
 char timeframe[100] = {0};
+int i2c_fd = 0;
 
 int draw_image(double *xs, double *ys, int size)
 {
@@ -108,24 +108,17 @@ int draw_image(double *xs, double *ys, int size)
     return success ? 0 : 1;
 }
 
-#if GRAPH
 void send_signal(float signal_type,
                  int signal_offset,
                  uint64_t *timeoffset,
                  struct timespec *tv_started,
                  struct timespec *tv_diff,
                  double *xs, double *ys)
-#else
-void send_signal(float signal_type,
-                 int signal_offset,
-                 uint64_t *timeoffset,
-                 struct timespec *tv_started,
-                 struct timespec *tv_diff)
-#endif
 {
     uint64_t sleep_starttime = 0;
     uint64_t etime_nsec = 0;
     uint64_t sleepcounter = 0;
+    int i2c_value = 0;
 
     for (int i = 0; i < 256; i++)
     {
@@ -136,11 +129,25 @@ void send_signal(float signal_type,
         if (array_iterator == 0)
             *timeoffset = etime_nsec;
 
+        i2c_value = (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset);
+
+#ifdef GRAPH
         // +1ns to prevent divide by 0
         xs[array_iterator] = (etime_nsec - *timeoffset + 1) / DIV_TO_GRAPH_MS;
         // ys[array_iterator] = (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset);
-        ys[array_iterator] = (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset) / 4095 * 3.3;
-        // ys[array_iterator] = (DACLookup_FullSine_8Bit[i] * signal_type) / 3.3 * 2.2;
+
+        // Graph with a +3.3V Max display
+        // ys[array_iterator] = (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset) / 4095 * 3.3;
+
+        ys[array_iterator] = i2c_value;
+#endif
+
+#ifdef __arm__
+        wiringPiI2CWriteReg8(i2c_fd, (i2c_value >> 8) & 0xFF, i2c_value & 0xFF);
+#endif
+
+        // printf("i2c value : %d, real value: %lf\n", i2c_value, (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset));
+        //  ys[array_iterator] = (DACLookup_FullSine_8Bit[i] * signal_type) / 3.3 * 2.2;
         array_iterator++;
 
         sleep_starttime = etime_nsec - *timeoffset;
@@ -218,11 +225,6 @@ uint32_t decToBcd2(uint32_t val)
     out = out + ((val / 10 * 16) + (val % 10));
 
     return out;
-}
-
-unsigned char bcdToDec(unsigned char val)
-{
-    return ((val / 16 * 10) + (val % 16));
 }
 
 // We're going to send test signal, calculate the duration for sending a certain amount
@@ -376,6 +378,17 @@ void generate_data(struct timespec *tv_started)
     set_sbs(ts.tm_sec + (ts.tm_min * 60) + (ts.tm_hour * 60 * 60));
 }
 
+void send_data(uint64_t *timeoffset,
+               struct timespec *tv_started,
+               struct timespec *tv_diff,
+               double *xs, double *ys)
+{
+    int loop_send = 0;
+
+    for (loop_send = 0; loop_send < 100; loop_send++)
+        send_binary(timeframe[loop_send], timeoffset, tv_started, tv_diff, xs, ys);
+}
+
 int main()
 {
     struct timespec *tv_started;
@@ -385,8 +398,16 @@ int main()
 
     // // Elapsed Time
     // uint64_t etime_nsec;
-    double xs[100000];
-    double ys[100000];
+    double xs[260000];
+    double ys[260000];
+
+#ifdef __arm__
+    // Max Priority
+    if (piHiPri(99))
+        printf("error with piHiPri\n");
+
+    i2c_fd = wiringPiI2CSetup(0x62); // 0x62 is devld for MCP4725
+#endif
 
     // 60
     // number      : 0011 1100 0011 1100
@@ -430,33 +451,17 @@ int main()
 
     clock_gettime(CLOCK_REALTIME, tv_started);
 
+    // Loop here
+    // +1 to seconds
     generate_data(tv_started);
+    send_data(timeoffset, tv_started, tv_diff, xs, ys);
 
     // send_data(ts.tm_sec, 8, timeoffset, tv_started, tv_diff, xs, ys)
 
-    send_binary(ZERO, timeoffset, tv_started, tv_diff, xs, ys);
-    send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
-    // send_binary(POS, timeoffset, tv_started, tv_diff, xs, ys);
     // send_binary(ZERO, timeoffset, tv_started, tv_diff, xs, ys);
     // send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
-    // send_binary(POS, timeoffset, tv_started, tv_diff, xs, ys);
 
-// NE PAS OUBLIER LE BAUD RATE A 400 000
-#ifdef __arm__
-    // Max Priority
-    
-    if (piHiPri(99))
-        printf("error with pihipri");
-
-    int fd, output;
-    fd = wiringPiI2CSetup(0x62); // 0x62 is devld for MCP4725
-
-    printf("fd is: %d \n", fd);
-
-    int value = 1365;
-    wiringPiI2CWriteReg8(fd, (value >> 8) & 0xFF, value & 0xFF);
-
-#endif
-
+#ifdef GRAPH
     draw_image(xs, ys, array_iterator);
+#endif
 }
