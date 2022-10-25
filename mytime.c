@@ -129,9 +129,8 @@ void send_signal(float signal_type,
         if (array_iterator == 0)
             *timeoffset = etime_nsec;
 
-
         i2c_value = (DACLookup_FullSine_5Bit[i] * signal_type + signal_offset);
-        //i2c_value = (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset);
+        // i2c_value = (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset);
 
 #ifdef GRAPH
         // +1ns to prevent divide by 0
@@ -145,7 +144,9 @@ void send_signal(float signal_type,
 #endif
 
 #ifdef __arm__
-        wiringPiI2CWriteReg8(i2c_fd, (i2c_value >> 8) & 0xFF, i2c_value & 0xFF);
+        if (wiringPiI2CWriteReg8(i2c_fd, (i2c_value >> 8) & 0xFF, i2c_value & 0xFF) == -1)
+            printf("error I2C: %s\n", strerror(errno));
+
 #endif
 
         // printf("i2c value : %d, real value: %lf\n", i2c_value, (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset));
@@ -409,6 +410,8 @@ int main()
         printf("error with piHiPri\n");
 
     i2c_fd = wiringPiI2CSetup(0x62); // 0x62 is devld for MCP4725
+    if (i2c_fd == -1)
+        printf("error I2C FD: %s\n", strerror(errno));
 #endif
 
     // 60
@@ -450,21 +453,22 @@ int main()
     clock_gettime(CLOCK_REALTIME, tv_started);
 
     autoadjust_sleep(timeoffset, tv_started, tv_diff, xs, ys);
-
+    sleep(5);
     clock_gettime(CLOCK_REALTIME, tv_started);
 
     // Loop here
     // +1 to seconds
-    generate_data(tv_started);
-    //send_data(timeoffset, tv_started, tv_diff, xs, ys);
-    //send_data(timeoffset, tv_started, tv_diff, xs, ys);
-    //send_data(timeoffset, tv_started, tv_diff, xs, ys);
-
+    //generate_data(tv_started);
+    
+    
+    // send_data(timeoffset, tv_started, tv_diff, xs, ys);
+    // send_data(timeoffset, tv_started, tv_diff, xs, ys);
+    // send_data(timeoffset, tv_started, tv_diff, xs, ys);
 
     // send_data(ts.tm_sec, 8, timeoffset, tv_started, tv_diff, xs, ys)
 
     send_binary(ZERO, timeoffset, tv_started, tv_diff, xs, ys);
-    //send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
+    // send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
 
     close(i2c_fd);
 
