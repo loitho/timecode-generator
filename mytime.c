@@ -121,7 +121,7 @@ void send_signal(float signal_type,
     uint64_t sleepcounter = 0;
     int i2c_value = 0;
 
-    for (int i = 0; i < 16; i++)
+    for (int i = 0; i < 8; i++)
     {
         // gettimeofday(tv_diff, NULL);
         clock_gettime(CLOCK_REALTIME, tv_diff);
@@ -130,7 +130,7 @@ void send_signal(float signal_type,
         if (array_iterator == 0)
             *timeoffset = etime_nsec;
 
-        i2c_value = (DACLookup_FullSine_4Bit[i] * signal_type + signal_offset);
+        i2c_value = (DACLookup_FullSine_3Bit[i] * signal_type + signal_offset);
         // i2c_value = (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset);
 
 #ifdef GRAPH
@@ -240,7 +240,7 @@ int autoadjust_sleep(uint64_t *timeoffset,
 {
     printf("adjusting timing ...\n");
 
-    float timing;
+    //float timing;
     float correction;
     uint64_t sleep_period_nsec_corrected = 0;
     uint64_t etime_nsec = 0;
@@ -250,7 +250,7 @@ int autoadjust_sleep(uint64_t *timeoffset,
     // How many time we want to adjust the timing
     for (int loop = 0; loop < 10; loop++)
     {
-        timing = 0;
+        //timing = 0;
         etime_nsec = 0;
         // Send 30 periods
         for (i = 0; i < 10; i++)
@@ -266,7 +266,7 @@ int autoadjust_sleep(uint64_t *timeoffset,
             etime_nsec += ((tv_diff->tv_sec - tv_started->tv_sec) * NANOSECONDS_PER_SECOND) + tv_diff->tv_nsec - *timeoffset;
 
             // One position back in the array
-            timing += xs[array_iterator - 1] - xs[0];
+            //timing += xs[array_iterator - 1] - xs[0];
         }
 
         // printf("Pass %d average etime_nsec is %lu ...\n", i, etime_nsec / 1000 / i);
@@ -454,7 +454,7 @@ int main()
     clock_gettime(CLOCK_REALTIME, tv_started);
 
     autoadjust_sleep(timeoffset, tv_started, tv_diff, xs, ys);
-    sleep(5);
+    sleep(2);
     clock_gettime(CLOCK_REALTIME, tv_started);
 
     // Loop here
