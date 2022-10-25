@@ -13,6 +13,7 @@
 #include <wiringPiI2C.h>
 #include <stdio.h>
 #include <wiringPi.h>
+#include <errno.h>
 #endif
 
 #define GRAPH 1
