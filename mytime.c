@@ -121,7 +121,7 @@ void send_signal(float signal_type,
     uint64_t sleepcounter = 0;
     int i2c_value = 0;
 
-    for (int i = 0; i < 32; i++)
+    for (int i = 0; i < 16; i++)
     {
         // gettimeofday(tv_diff, NULL);
         clock_gettime(CLOCK_REALTIME, tv_diff);
@@ -130,7 +130,7 @@ void send_signal(float signal_type,
         if (array_iterator == 0)
             *timeoffset = etime_nsec;
 
-        i2c_value = (DACLookup_FullSine_5Bit[i] * signal_type + signal_offset);
+        i2c_value = (DACLookup_FullSine_4Bit[i] * signal_type + signal_offset);
         // i2c_value = (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset);
 
 #ifdef GRAPH
