@@ -469,7 +469,8 @@ int main()
     // send_data(ts.tm_sec, 8, timeoffset, tv_started, tv_diff, xs, ys)
 
     send_binary(ZERO, timeoffset, tv_started, tv_diff, xs, ys);
-    // send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
+    send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
+    send_binary(POS, timeoffset, tv_started, tv_diff, xs, ys);
 
     close(i2c_fd);
 
