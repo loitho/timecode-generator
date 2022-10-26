@@ -17,6 +17,7 @@
 #endif
 
 #define GRAPH 1
+#define ARRAY_SIZE 2000
 
 #define NANOSECONDS_PER_SECOND 1000000000
 #define DIV_TO_GRAPH_MS 1000
@@ -402,8 +403,8 @@ int main()
 
     // // Elapsed Time
     // uint64_t etime_nsec;
-    double xs[260000];
-    double ys[260000];
+    double xs[ARRAY_SIZE];
+    double ys[ARRAY_SIZE];
 
 #ifdef __arm__
     // Max Priority
