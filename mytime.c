@@ -27,6 +27,7 @@
 // Because : you need 256 different values (1 Period in 1 Millisecond)
 // A bit lower to prevent issues
 //#define SLEEP_NS 3800;
+// 7000 / 6932 seems OK for Raspy
 #define SLEEP_NS 4000
 
 #define SLEEP_ADJUST 1
