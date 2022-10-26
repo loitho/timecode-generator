@@ -17,7 +17,8 @@
 #endif
 
 #define GRAPH 1
-#define ARRAY_SIZE 2000
+#define ARRAY_SIZE 200000
+
 
 #define NANOSECONDS_PER_SECOND 1000000000
 #define DIV_TO_GRAPH_MS 1000
@@ -27,6 +28,8 @@
 // A bit lower to prevent issues
 //#define SLEEP_NS 3800;
 #define SLEEP_NS 4000
+
+#define SLEEP_ADJUST 1
 
 // MCP4725 uses values from 0 to 4095.
 // 0    => 0   Volts
@@ -454,24 +457,27 @@ int main()
 
     clock_gettime(CLOCK_REALTIME, tv_started);
 
+#ifdef SLEEP_ADJUST
     autoadjust_sleep(timeoffset, tv_started, tv_diff, xs, ys);
+#endif
+
     sleep(2);
     clock_gettime(CLOCK_REALTIME, tv_started);
 
     // Loop here
     // +1 to seconds
-    //generate_data(tv_started);
+    generate_data(tv_started);
     
     
-    // send_data(timeoffset, tv_started, tv_diff, xs, ys);
-    // send_data(timeoffset, tv_started, tv_diff, xs, ys);
-    // send_data(timeoffset, tv_started, tv_diff, xs, ys);
+    send_data(timeoffset, tv_started, tv_diff, xs, ys);
+    send_data(timeoffset, tv_started, tv_diff, xs, ys);
+    send_data(timeoffset, tv_started, tv_diff, xs, ys);
 
-    // send_data(ts.tm_sec, 8, timeoffset, tv_started, tv_diff, xs, ys)
 
-    send_binary(ZERO, timeoffset, tv_started, tv_diff, xs, ys);
-    send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
-    send_binary(POS, timeoffset, tv_started, tv_diff, xs, ys);
+
+    // send_binary(ZERO, timeoffset, tv_started, tv_diff, xs, ys);
+    // send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
+    // send_binary(POS, timeoffset, tv_started, tv_diff, xs, ys);
 
     close(i2c_fd);
 
