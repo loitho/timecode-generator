@@ -426,7 +426,7 @@ int main()
         SpiWriteAndRead(spi,&buf[0], &buf[0], 2, false); // Transfer buffer data to SPI call
         SpiClosePort(spi);
     }
-
+exit(0);
 // #endif
 
     // 60
