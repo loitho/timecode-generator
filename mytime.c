@@ -403,8 +403,15 @@ void send_data(uint64_t *timeoffset,
         send_binary(timeframe[loop_send], timeoffset, tv_started, tv_diff, xs, ys);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+    if (argc <= 1)
+    {
+        printf("You did not feed me arguments, I will die now :( ...");
+        exit(1);
+    } // otherwise continue on our merry way....
+    int arg1 = atoi(argv[1]);
+
     struct timespec *tv_started;
     struct timespec *tv_diff;
 
@@ -417,20 +424,20 @@ int main()
 
     // #ifdef __arm__
     SPI_HANDLE spi = SpiOpenPort(0, 8, 1000000, 0, false);
-    uint16_t data = 2153;
+    uint16_t data = arg1 % 4096;
 
-    printf(" 1er : %d, 2nd : %d\n", 0x30 + (data >> 8),  0x00 + (data & 0xff));
+    printf(" 1er : %d, 2nd : %d\n", 0x30 + (data >> 8), 0x00 + (data & 0xff));
 
     uint8_t buf0 = 0x30 + (uint8_t)(data >> 8);
     uint8_t buf1 = 0x00 + (data & 0xff);
 
     if (spi)
     {
-        //int data = 4095;
-        // uint8_t bufdata = 0;
-        // MIN: echo -ne "\x30\x00" > /dev/spidev0.0
-        // MAX: echo -ne "\x3F\xFF" > /dev/spidev0.0
-        uint8_t buf[2] = {0x30, 0x00};
+        // int data = 4095;
+        //  uint8_t bufdata = 0;
+        //  MIN: echo -ne "\x30\x00" > /dev/spidev0.0
+        //  MAX: echo -ne "\x3F\xFF" > /dev/spidev0.0
+        uint8_t buf[2] = {buf0, buf1};
 
         SpiWriteAndRead(spi, &buf[0], &buf[0], 2, false); // Transfer buffer data to SPI call
         SpiClosePort(spi);
