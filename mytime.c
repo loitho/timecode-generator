@@ -16,9 +16,10 @@
 #include <errno.h>
 #endif
 
+#include "spi.h"
+
 #define GRAPH 1
 #define ARRAY_SIZE 200000
-
 
 #define NANOSECONDS_PER_SECOND 1000000000
 #define DIV_TO_GRAPH_MS 1000
@@ -36,6 +37,10 @@
 // 0    => 0   Volts
 // 4095 => 3.3 Volts
 // But AFNOR Works with 2.2 volts peak, so we need to multiply by 2/3
+
+// Niveau d’entrée nominale : 2.2Vcc.
+// Impédance d’entrée : 3.5 Kohms.
+// Tension minimale d’entrée : 70 mVcc.
 
 // MARK  => 2.17  Vpp amplitude
 // SPACE => 0.688 Vpp amplitude
@@ -245,7 +250,7 @@ int autoadjust_sleep(uint64_t *timeoffset,
 {
     printf("adjusting timing ...\n");
 
-    //float timing;
+    // float timing;
     float correction;
     uint64_t sleep_period_nsec_corrected = 0;
     uint64_t etime_nsec = 0;
@@ -255,7 +260,7 @@ int autoadjust_sleep(uint64_t *timeoffset,
     // How many time we want to adjust the timing
     for (int loop = 0; loop < 10; loop++)
     {
-        //timing = 0;
+        // timing = 0;
         etime_nsec = 0;
         // Send 30 periods
         for (i = 0; i < 10; i++)
@@ -271,7 +276,7 @@ int autoadjust_sleep(uint64_t *timeoffset,
             etime_nsec += ((tv_diff->tv_sec - tv_started->tv_sec) * NANOSECONDS_PER_SECOND) + tv_diff->tv_nsec - *timeoffset;
 
             // One position back in the array
-            //timing += xs[array_iterator - 1] - xs[0];
+            // timing += xs[array_iterator - 1] - xs[0];
         }
 
         // printf("Pass %d average etime_nsec is %lu ...\n", i, etime_nsec / 1000 / i);
@@ -410,15 +415,19 @@ int main()
     double xs[ARRAY_SIZE];
     double ys[ARRAY_SIZE];
 
-#ifdef __arm__
-    // Max Priority
-    if (piHiPri(99))
-        printf("error with piHiPri\n");
+// #ifdef __arm__
+    SPI_HANDLE spi = SpiOpenPort(0, 8, 1000000, 0, false);
+    if (spi)
+    {
+        // uint8_t data = 4095;
+        // uint8_t bufdata = 0;
+        uint8_t buf[2] = { 0x30, 0x00 };	
 
-    i2c_fd = wiringPiI2CSetup(0x62); // 0x62 is devld for MCP4725
-    if (i2c_fd == -1)
-        printf("error I2C FD: %s\n", strerror(errno));
-#endif
+        SpiWriteAndRead(spi,&buf[0], &buf[0], 2, false); // Transfer buffer data to SPI call
+        SpiClosePort(spi);
+    }
+
+// #endif
 
     // 60
     // number      : 0011 1100 0011 1100
@@ -468,19 +477,18 @@ int main()
     // Loop here
     // +1 to seconds
     generate_data(tv_started);
-    
-    
-    send_data(timeoffset, tv_started, tv_diff, xs, ys);
-    send_data(timeoffset, tv_started, tv_diff, xs, ys);
-    send_data(timeoffset, tv_started, tv_diff, xs, ys);
 
+    // send_data(timeoffset, tv_started, tv_diff, xs, ys);
+    // send_data(timeoffset, tv_started, tv_diff, xs, ys);
+    // send_data(timeoffset, tv_started, tv_diff, xs, ys);
 
+    send_binary(ZERO, timeoffset, tv_started, tv_diff, xs, ys);
+    send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
+    send_binary(POS, timeoffset, tv_started, tv_diff, xs, ys);
 
-    // send_binary(ZERO, timeoffset, tv_started, tv_diff, xs, ys);
-    // send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
-    // send_binary(POS, timeoffset, tv_started, tv_diff, xs, ys);
-
+#ifdef __arm__
     close(i2c_fd);
+#endif
 
 #ifdef GRAPH
     draw_image(xs, ys, array_iterator);

@@ -33,18 +33,20 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
+                "-pthread",
                 //"-O3",
                 "-Wall",
                 "-Wextra",
                 "-L${workspaceFolder}/include",
                 "-Wl,-rpath=${workspaceFolder}/include",
                 "-I${workspaceFolder}/include",
-                "${file}",
-                //"${workspaceFolder}/include/*.c",
+       //         "${file}",
+                "${workspaceFolder}/*.c",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-lm",
                 "-lpbplots",
+                "-lrt"
             ],
             "options": {
                 "cwd": "${fileDirname}"
