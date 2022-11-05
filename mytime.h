@@ -53,7 +53,7 @@ typedef enum
 } pos_type;
 
 // https://github.com/adafruit/Adafruit_MCP4725/blob/master/examples/sinewave/sinewave.ino
-const int DACLookup_FullSine_8Bit[256] =
+const uint16_t DACLookup_FullSine_8Bit[256] =
     {
         2048, 2098, 2148, 2198, 2248, 2298, 2348, 2398,
         2447, 2496, 2545, 2594, 2642, 2690, 2737, 2784,
@@ -88,7 +88,7 @@ const int DACLookup_FullSine_8Bit[256] =
         1264, 1311, 1358, 1405, 1453, 1501, 1550, 1599,
         1648, 1697, 1747, 1797, 1847, 1897, 1947, 1997};
 
-const int DACLookup_FullSine_7Bit[128] =
+const uint16_t DACLookup_FullSine_7Bit[128] =
     {
         2048, 2148, 2248, 2348, 2447, 2545, 2642, 2737,
         2831, 2923, 3013, 3100, 3185, 3267, 3346, 3423,
@@ -107,7 +107,7 @@ const int DACLookup_FullSine_7Bit[128] =
         600, 672, 749, 828, 910, 995, 1082, 1172,
         1264, 1358, 1453, 1550, 1648, 1747, 1847, 1947};
 
-const int DACLookup_FullSine_6Bit[64] =
+const uint16_t DACLookup_FullSine_6Bit[64] =
     {
         2048, 2248, 2447, 2642, 2831, 3013, 3185, 3346,
         3495, 3630, 3750, 3853, 3939, 4007, 4056, 4085,
@@ -118,19 +118,19 @@ const int DACLookup_FullSine_6Bit[64] =
         0, 10, 39, 88, 156, 242, 345, 465,
         600, 749, 910, 1082, 1264, 1453, 1648, 1847};
 
-const int DACLookup_FullSine_5Bit[32] =
+const uint16_t DACLookup_FullSine_5Bit[32] =
     {
         2048, 2447, 2831, 3185, 3495, 3750, 3939, 4056,
         4095, 4056, 3939, 3750, 3495, 3185, 2831, 2447,
         2048, 1648, 1264, 910, 600, 345, 156, 39,
         0, 39, 156, 345, 600, 910, 1264, 1648};
 
-const int DACLookup_FullSine_4Bit[16] =
+const uint16_t DACLookup_FullSine_4Bit[16] =
     {
         2048, 2831, 3495, 3939, 4095, 3939, 3495, 2831,
         2048, 1264, 600, 156, 0, 156, 600, 1264};
 
-const int DACLookup_FullSine_3Bit[8] =
+const uint16_t DACLookup_FullSine_3Bit[8] =
     {
         2048, 3495, 4095, 3495, 2048, 600, 0, 600};
 

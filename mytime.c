@@ -415,19 +415,28 @@ int main()
     double xs[ARRAY_SIZE];
     double ys[ARRAY_SIZE];
 
-// #ifdef __arm__
+    // #ifdef __arm__
     SPI_HANDLE spi = SpiOpenPort(0, 8, 1000000, 0, false);
+    uint16_t data = 2153;
+
+    printf(" 1er : %d, 2nd : %d\n", 0x30 + (data >> 8),  0x00 + (data & 0xff));
+
+    uint8_t buf0 = 0x30 + (uint8_t)(data >> 8);
+    uint8_t buf1 = 0x00 + (data & 0xff);
+
     if (spi)
     {
-        // uint8_t data = 4095;
+        //int data = 4095;
         // uint8_t bufdata = 0;
-        uint8_t buf[2] = { 0x30, 0x00 };	
+        // MIN: echo -ne "\x30\x00" > /dev/spidev0.0
+        // MAX: echo -ne "\x3F\xFF" > /dev/spidev0.0
+        uint8_t buf[2] = {0x30, 0x00};
 
-        SpiWriteAndRead(spi,&buf[0], &buf[0], 2, false); // Transfer buffer data to SPI call
+        SpiWriteAndRead(spi, &buf[0], &buf[0], 2, false); // Transfer buffer data to SPI call
         SpiClosePort(spi);
     }
-exit(0);
-// #endif
+    exit(0);
+    // #endif
 
     // 60
     // number      : 0011 1100 0011 1100
