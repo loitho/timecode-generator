@@ -17,8 +17,9 @@
 #endif
 
 #include "spi.h"
+#include <pigpio.h>
 
-#define SPI_SPEED 20000000
+#define SPI_SPEED 2000000
 
 #define GRAPH 1
 #define ARRAY_SIZE 200000
@@ -65,7 +66,7 @@ int array_iterator = 0;
 char timeframe[100] = {0};
 
 // Global handle for SPI communication
-SPI_HANDLE spi;
+uint spi;
 
 int draw_image(double *xs, double *ys, int size)
 {
@@ -168,8 +169,8 @@ void send_signal(float signal_type,
         // SPI
         buf[0] = 0x30 + (uint8_t)(dac_value >> 8);
         buf[1] = 0x00 + (dac_value & 0xff);
-        //SpiWriteAndRead(spi, &buf[0], &buf[0], 2, false); // Transfer buffer data to SPI call
-        SpiWriteBlockRepeat (spi, &buf[0], 2, 1, true)
+        // SpiWriteAndRead(spi, &buf[0], &buf[0], 2, false); // Transfer buffer data to SPI call
+        // SpiWriteBlockRepeat (spi, &buf[0], 2, 1, true);
 #endif
 
         // printf("i2c value : %d, real value: %lf\n", dac_value, (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset));
@@ -415,8 +416,15 @@ void send_data(uint64_t *timeoffset,
         send_binary(timeframe[loop_send], timeoffset, tv_started, tv_diff, xs, ys);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+    if (argc <= 1)
+    {
+        printf("You did not feed me arguments, I will die now :( ...");
+        exit(1);
+    }                         // otherwise continue on our merry way....
+    int arg1 = atoi(argv[1]); // argv[0] is the program name
+                              // atoi = ascii to int
     struct timespec *tv_started;
     struct timespec *tv_diff;
 
@@ -424,9 +432,23 @@ int main()
     double ys[ARRAY_SIZE];
 
 #ifdef __arm__
+
+    if (gpioInitialise() < 0)
+    {
+        // pigpio initialisation failed.
+        printf("pigpio failed initialisation\n");
+
+        exit(1);
+    }
+    else
+    {
+        printf("pigpio initialized\n");
+    }
+
     // 5 MHz
-    spi = SpiOpenPort(0, 8, SPI_SPEED, 0, false);
-    // uint16_t data = arg1 % 4096;
+    // spi = SpiOpenPort(0, 8, SPI_SPEED, 0, false);
+    spi = spiOpen(0, SPI_SPEED, 0);
+    uint16_t data = arg1 % 4096;
 
     // uint8_t buf[2] = {
     //     0x30 + (uint8_t)(data >> 8),
@@ -443,7 +465,23 @@ int main()
         //  MAX: echo -ne "\x3F\xFF" > /dev/spidev0.0
         printf("SPI initiated\n");
 
+        char buf[2];
+        int ret;
+
+        buf[0] = 0x30 + (char)(data >> 8);
+        buf[1] = 0x00 + (data & 0xff);
+        printf(" 1er : %d, 2nd : %d\n", buf[0], buf[1]);
+        printf(" 1er : %04X, 2nd : %04X\n", buf[0], buf[1]);
+
+        // ret = spiWrite(spi, &buf[0], 2);
+        // printf("Return value for SPIWrite : %d\n", ret);
+
+        ret = spiXfer(spi, &buf[0], NULL, 2);
+        printf("Return value for SPIWrite : %d\n", ret);
+
         // SpiWriteAndRead(spi, &buf[0], &buf[0], 2, false); // Transfer buffer data to SPI call
+
+        exit(0)
     }
     else
     {
@@ -479,12 +517,13 @@ int main()
     //  send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
     //  send_binary(POS, timeoffset, tv_started, tv_diff, xs, ys);
 
-    //send_signal(SIGNAL_MARK, OFFSET_MARK, timeoffset, tv_started, tv_diff, xs, ys);
+    // send_signal(SIGNAL_MARK, OFFSET_MARK, timeoffset, tv_started, tv_diff, xs, ys);
 
 #ifdef __arm__
     // close(i2c_fd);
-    SpiClosePort(spi);
-
+    // SpiClosePort(spi);
+    SpiClose(spi);
+    gpioTerminate(void);
 #endif
 
 #if GRAPH

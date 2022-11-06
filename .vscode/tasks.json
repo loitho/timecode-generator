@@ -46,7 +46,8 @@
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-lm",
                 "-lpbplots",
-                "-lrt"
+                "-lrt",
+                "-lpigpio"
             ],
             "options": {
                 "cwd": "${fileDirname}"
