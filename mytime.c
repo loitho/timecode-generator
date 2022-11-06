@@ -32,6 +32,7 @@
 #define SLEEP_NS 4000
 
 #define SLEEP_ADJUST 1
+#define SLEEP_ADJUST_CYCLE 50
 
 // MCP4725 uses values from 0 to 4095.
 // 0    => 0   Volts
@@ -272,7 +273,7 @@ int autoadjust_sleep(uint64_t *timeoffset,
     int i;
 
     // How many time we want to adjust the timing
-    for (int loop = 0; loop < 10; loop++)
+    for (int loop = 0; loop < SLEEP_ADJUST_CYCLE; loop++)
     {
         // timing = 0;
         etime_nsec = 0;

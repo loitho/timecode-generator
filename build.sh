@@ -6,3 +6,4 @@
         -o ./mytime -lpbplots -lm -lpbplots -lrt -lpigpio
 
 # sh build.sh && sudo nice  --adjustment=-20 ./mytime && python -m http.server 8080
+# sudo ionice -c 2 -n 0 nice -n -20 ./mytime 1
