@@ -3,6 +3,6 @@
         -Wall -Wextra -L./include \
         -lpbplots -Wl,-rpath=./include \
         -I./include ./*.c \
-        -o ./mytime -lm -lpbplots -lrt -lpigpio
+        -o ./mytime -lpbplots -lm -lpbplots -lrt -lpigpio
 
 # sh build.sh && sudo nice  --adjustment=-20 ./mytime && python -m http.server 8080
