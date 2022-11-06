@@ -31,7 +31,7 @@
 // 7000 / 6932 seems OK for Raspy
 #define SLEEP_NS 4000
 
-#define SLEEP_ADJUST 1
+#define SLEEP_ADJUST 0
 
 // MCP4725 uses values from 0 to 4095.
 // 0    => 0   Volts
@@ -61,7 +61,9 @@ uint64_t sleep_period_nsec = SLEEP_NS;
 
 int array_iterator = 0;
 char timeframe[100] = {0};
-int i2c_fd = 0;
+
+// Global handle for SPI communication
+SPI_HANDLE spi;
 
 int draw_image(double *xs, double *ys, int size)
 {
@@ -129,9 +131,12 @@ void send_signal(float signal_type,
     uint64_t sleep_starttime = 0;
     uint64_t etime_nsec = 0;
     uint64_t sleepcounter = 0;
-    int i2c_value = 0;
+    // Min 0, Max 4095
+    int dac_value = 0;
 
-    for (int i = 0; i < 8; i++)
+    uint8_t buf[2];
+
+    for (int i = 0; i < 256; i++)
     {
         // gettimeofday(tv_diff, NULL);
         clock_gettime(CLOCK_REALTIME, tv_diff);
@@ -140,27 +145,31 @@ void send_signal(float signal_type,
         if (array_iterator == 0)
             *timeoffset = etime_nsec;
 
-        i2c_value = (DACLookup_FullSine_3Bit[i] * signal_type + signal_offset);
-        // i2c_value = (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset);
+        dac_value = (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset);
 
-#ifdef GRAPH
+#if GRAPH
         // +1ns to prevent divide by 0
         xs[array_iterator] = (etime_nsec - *timeoffset + 1) / DIV_TO_GRAPH_MS;
-        // ys[array_iterator] = (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset);
 
         // Graph with a +3.3V Max display
-        // ys[array_iterator] = (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset) / 4095 * 3.3;
+        // ys[array_iterator] = dac_value / 4095.0 * 3.3;
 
-        ys[array_iterator] = i2c_value;
+        // Graph the DAC value sent to the chip
+        ys[array_iterator] = dac_value;
 #endif
 
 #ifdef __arm__
-        if (wiringPiI2CWriteReg8(i2c_fd, (i2c_value >> 8) & 0xFF, i2c_value & 0xFF) == -1)
-            printf("error I2C: %s\n", strerror(errno));
+        // I2C
+        // if (wiringPiI2CWriteReg8(i2c_fd, (dac_value >> 8) & 0xFF, dac_value & 0xFF) == -1)
+        //     printf("error I2C: %s\n", strerror(errno));
 
+        // SPI
+        buf[0] = 0x30 + (uint8_t)(dac_value >> 8);
+        buf[1] = 0x00 + (dac_value & 0xff);
+        SpiWriteAndRead(spi, &buf[0], &buf[0], 2, false); // Transfer buffer data to SPI call
 #endif
 
-        // printf("i2c value : %d, real value: %lf\n", i2c_value, (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset));
+        // printf("i2c value : %d, real value: %lf\n", dac_value, (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset));
         //  ys[array_iterator] = (DACLookup_FullSine_8Bit[i] * signal_type) / 3.3 * 2.2;
         array_iterator++;
 
@@ -176,6 +185,8 @@ void send_signal(float signal_type,
             // looptime++;
         }
         sleepcounter = 0;
+
+        usleep(100000);
     }
 }
 
@@ -403,33 +414,25 @@ void send_data(uint64_t *timeoffset,
         send_binary(timeframe[loop_send], timeoffset, tv_started, tv_diff, xs, ys);
 }
 
-int main(int argc, char *argv[])
+int main()
 {
-    if (argc <= 1)
-    {
-        printf("You did not feed me arguments, I will die now :( ...");
-        exit(1);
-    } // otherwise continue on our merry way....
-    int arg1 = atoi(argv[1]);
-
     struct timespec *tv_started;
     struct timespec *tv_diff;
 
-    // struct timespec *tv_sleep;
-
-    // // Elapsed Time
-    // uint64_t etime_nsec;
     double xs[ARRAY_SIZE];
     double ys[ARRAY_SIZE];
 
-    // #ifdef __arm__
-    SPI_HANDLE spi = SpiOpenPort(0, 8, 1000000, 0, false);
-    uint16_t data = arg1 % 4096;
+#ifdef __arm__
+    // 5 MHz
+    spi = SpiOpenPort(0, 8, 5000000, 0, false);
+    // uint16_t data = arg1 % 4096;
 
-    printf(" 1er : %d, 2nd : %d\n", 0x30 + (data >> 8), 0x00 + (data & 0xff));
+    // uint8_t buf[2] = {
+    //     0x30 + (uint8_t)(data >> 8),
+    //     0x00 + (data & 0xff)};
 
-    uint8_t buf0 = 0x30 + (uint8_t)(data >> 8);
-    uint8_t buf1 = 0x00 + (data & 0xff);
+    // printf(" 1er : %d, 2nd : %d\n", buf[0], buf[1]);
+    // printf(" 1er : %04X, 2nd : %04X\n", buf[0], buf[1]);
 
     if (spi)
     {
@@ -437,43 +440,16 @@ int main(int argc, char *argv[])
         //  uint8_t bufdata = 0;
         //  MIN: echo -ne "\x30\x00" > /dev/spidev0.0
         //  MAX: echo -ne "\x3F\xFF" > /dev/spidev0.0
-        uint8_t buf[2] = {buf0, buf1};
+        printf("SPI initiated\n");
 
         SpiWriteAndRead(spi, &buf[0], &buf[0], 2, false); // Transfer buffer data to SPI call
-        SpiClosePort(spi);
     }
-    exit(0);
-    // #endif
-
-    // 60
-    // number      : 0011 1100 0011 1100
-    // number  bcd : 0000 0000 0110 0000
-
-    // 160
-    // number      : 1010 0000 1010 0000
-    // number  bcd : 0000 0001 0000 0000
-
-    // uint32_t number = 354;
-    // uint32_t numberp1 = number & 0xFF00;
-    // uint32_t numberp2 = number >> 8;
-
-    // printf("number Leading text " BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(number));
-
-    // printf("numberp1 Leading text " BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(numberp1));
-    // printf("numberp2 Leading text " BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(numberp2));
-
-    // printf("short DEC to BCD %d\n", decToBcd(number) >> 8);
-    // printf("short DEC to BCD %d\n", decToBcd(number));
-
-    // printf("long  DEC to BCD %d\n", decToBcd2(number));
-
-    // printf("short Leading text " BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(decToBcd(number)));
-    // printf("long  Leading text " BYTE_TO_BINARY_PATTERN "\n", BYTE_TO_BINARY(decToBcd2(number)));
-
-    // printf("number      : " BYTE_TO_BINARY_PATTERN " " BYTE_TO_BINARY_PATTERN "\n",
-    //        BYTE_TO_BINARY(number), BYTE_TO_BINARY(number));
-    // printf("number  bcd : " BYTE_TO_BINARY_PATTERN " " BYTE_TO_BINARY_PATTERN "\n",
-    //        BYTE_TO_BINARY(decToBcd2(number) >> 8), BYTE_TO_BINARY(decToBcd2(number)));
+    else
+    {
+        printf("SPI failure\n");
+        exit(1);
+    }
+#endif
 
     uint64_t *timeoffset;
     timeoffset = malloc(sizeof(*timeoffset));
@@ -483,7 +459,7 @@ int main(int argc, char *argv[])
 
     clock_gettime(CLOCK_REALTIME, tv_started);
 
-#ifdef SLEEP_ADJUST
+#if SLEEP_ADJUST
     autoadjust_sleep(timeoffset, tv_started, tv_diff, xs, ys);
 #endif
 
@@ -498,15 +474,19 @@ int main(int argc, char *argv[])
     // send_data(timeoffset, tv_started, tv_diff, xs, ys);
     // send_data(timeoffset, tv_started, tv_diff, xs, ys);
 
-    send_binary(ZERO, timeoffset, tv_started, tv_diff, xs, ys);
-    send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
-    send_binary(POS, timeoffset, tv_started, tv_diff, xs, ys);
+    // send_binary(ZERO, timeoffset, tv_started, tv_diff, xs, ys);
+    //  send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
+    //  send_binary(POS, timeoffset, tv_started, tv_diff, xs, ys);
+
+    send_signal(SIGNAL_MARK, OFFSET_MARK, timeoffset, tv_started, tv_diff, xs, ys);
 
 #ifdef __arm__
     close(i2c_fd);
+    SpiClosePort(spi);
+
 #endif
 
-#ifdef GRAPH
+#if GRAPH
     draw_image(xs, ys, array_iterator);
 #endif
 }
