@@ -18,7 +18,7 @@
 
 #include "spi.h"
 
-#define SPI_SPEED 5000000
+#define SPI_SPEED 20000000
 
 #define GRAPH 1
 #define ARRAY_SIZE 200000
@@ -168,7 +168,8 @@ void send_signal(float signal_type,
         // SPI
         buf[0] = 0x30 + (uint8_t)(dac_value >> 8);
         buf[1] = 0x00 + (dac_value & 0xff);
-        SpiWriteAndRead(spi, &buf[0], &buf[0], 2, false); // Transfer buffer data to SPI call
+        //SpiWriteAndRead(spi, &buf[0], &buf[0], 2, false); // Transfer buffer data to SPI call
+        SpiWriteBlockRepeat (spi, &buf[0], 2, 1, true)
 #endif
 
         // printf("i2c value : %d, real value: %lf\n", dac_value, (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset));

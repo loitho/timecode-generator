@@ -22,3 +22,6 @@ dtparam=i2c_arm=on,i2c_arm_baudrate=3400000
 mcp4921 
 
 https://github.com/LdB-ECM/linux_device_access
+
+
+ apt-get install pigpio python-pigpio python3-pigpio
