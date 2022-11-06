@@ -66,7 +66,7 @@ int array_iterator = 0;
 char timeframe[100] = {0};
 
 // Global handle for SPI communication
-uint spi;
+int spi;
 
 int draw_image(double *xs, double *ys, int size)
 {
@@ -459,7 +459,7 @@ int main(int argc, char *argv[])
     // printf(" 1er : %d, 2nd : %d\n", buf[0], buf[1]);
     // printf(" 1er : %04X, 2nd : %04X\n", buf[0], buf[1]);
 
-    if (spi)
+    if (spi >= 0)
     {
         // int data = 4095;
         //  uint8_t bufdata = 0;
@@ -487,7 +487,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        printf("SPI failure\n");
+        printf("SPI failure, SPI Handle value : %d \n", spi);
         exit(1);
     }
 #endif
