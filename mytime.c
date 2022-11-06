@@ -15,8 +15,8 @@
 #include <pigpio.h>
 #endif
 
-
-#define SPI_SPEED 2000000
+// 40 MHz
+#define SPI_SPEED 40000000
 
 #define GRAPH 1
 #define ARRAY_SIZE 200000
