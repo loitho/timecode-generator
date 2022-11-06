@@ -137,7 +137,7 @@ void send_signal(float signal_type,
 
     char buf[2];
 
-    for (int i = 0; i < 256; i++)
+    for (int i = 0; i < 128; i++)
     {
         // gettimeofday(tv_diff, NULL);
         clock_gettime(CLOCK_REALTIME, tv_diff);
@@ -146,17 +146,17 @@ void send_signal(float signal_type,
         if (array_iterator == 0)
             *timeoffset = etime_nsec;
 
-        dac_value = (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset);
+        dac_value = (DACLookup_FullSine_7Bit[i] * signal_type + signal_offset);
 
 #if GRAPH
         // +1ns to prevent divide by 0
         xs[array_iterator] = (etime_nsec - *timeoffset + 1) / DIV_TO_GRAPH_MS;
 
         // Graph with a +3.3V Max display
-        ys[array_iterator] = dac_value / 4095.0 * 3.3;
+        // ys[array_iterator] = dac_value / 4095.0 * 3.3;
 
         // Graph the DAC value sent to the chip
-        // ys[array_iterator] = dac_value;
+        ys[array_iterator] = dac_value;
 #endif
 
 #ifdef __arm__
@@ -313,6 +313,11 @@ int autoadjust_sleep(uint64_t *timeoffset,
 
         array_iterator = 0;
     }
+
+// Add more ajustment due to SPI delay
+#ifdef __arm__
+    sleep_period_nsec = sleep_period_nsec - 190;
+#endif
     printf("Sleep_period_nsec was %d :, will be : %llu ...\n", SLEEP_NS, sleep_period_nsec);
 
     // array_iterator = 0;
@@ -423,7 +428,7 @@ int main(int argc, char *argv[])
     int arg1 = 0;
     if (argc == 2)
     {
-        printf("Selecting sleep period from CLI");
+        printf("Selecting sleep period from CLI\n");
         sleep_period_nsec = atoi(argv[1]);
         arg1 = atoi(argv[1]); // argv[0] is the program name
     }                         // otherwise continue on our merry way....
