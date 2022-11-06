@@ -156,7 +156,7 @@ void send_signal(float signal_type,
         ys[array_iterator] = dac_value / 4095.0 * 3.3;
 
         // Graph the DAC value sent to the chip
-        //ys[array_iterator] = dac_value;
+        // ys[array_iterator] = dac_value;
 #endif
 
 #ifdef __arm__
@@ -190,7 +190,7 @@ void send_signal(float signal_type,
             // looptime++;
         }
         sleepcounter = 0;
-        //usleep(100000);
+        // usleep(100000);
     }
 }
 
@@ -420,13 +420,15 @@ void send_data(uint64_t *timeoffset,
 
 int main(int argc, char *argv[])
 {
+    int arg1 = 0;
     if (argc == 2)
     {
         printf("Selecting sleep period from CLI");
         sleep_period_nsec = atoi(argv[1]);
+        arg1 = atoi(argv[1]); // argv[0] is the program name
     }                         // otherwise continue on our merry way....
-    int arg1 = atoi(argv[1]); // argv[0] is the program name
-                              // atoi = ascii to int
+
+    // atoi = ascii to int
     struct timespec *tv_started;
     struct timespec *tv_diff;
 
@@ -473,8 +475,8 @@ int main(int argc, char *argv[])
         // ret = spiWrite(spi, &buf[0], 2);
         // printf("Return value for SPIWrite : %d\n", ret);
 
-        //ret = spiXfer(spi, &buf[0], NULL, 2);
-        //printf("Return value for SPIReadWrite : %d\n", ret);
+        // ret = spiXfer(spi, &buf[0], NULL, 2);
+        // printf("Return value for SPIReadWrite : %d\n", ret);
 
         // exit(0);
     }
