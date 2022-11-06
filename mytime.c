@@ -483,7 +483,7 @@ int main(int argc, char *argv[])
 
         // SpiWriteAndRead(spi, &buf[0], &buf[0], 2, false); // Transfer buffer data to SPI call
 
-        exit(0)
+        exit(0);
     }
     else
     {
@@ -524,8 +524,8 @@ int main(int argc, char *argv[])
 #ifdef __arm__
     // close(i2c_fd);
     // SpiClosePort(spi);
-    SpiClose(spi);
-    gpioTerminate(void);
+    spiClose(spi);
+    gpioTerminate();
 #endif
 
 #if GRAPH
