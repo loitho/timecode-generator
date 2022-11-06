@@ -31,7 +31,7 @@
 // 7000 / 6932 seems OK for Raspy
 #define SLEEP_NS 4000
 
-#define SLEEP_ADJUST 0
+#define SLEEP_ADJUST 1
 
 // MCP4725 uses values from 0 to 4095.
 // 0    => 0   Volts
@@ -185,8 +185,6 @@ void send_signal(float signal_type,
             // looptime++;
         }
         sleepcounter = 0;
-
-        usleep(100000);
     }
 }
 
@@ -442,7 +440,7 @@ int main()
         //  MAX: echo -ne "\x3F\xFF" > /dev/spidev0.0
         printf("SPI initiated\n");
 
-        //SpiWriteAndRead(spi, &buf[0], &buf[0], 2, false); // Transfer buffer data to SPI call
+        // SpiWriteAndRead(spi, &buf[0], &buf[0], 2, false); // Transfer buffer data to SPI call
     }
     else
     {
@@ -474,11 +472,11 @@ int main()
     // send_data(timeoffset, tv_started, tv_diff, xs, ys);
     // send_data(timeoffset, tv_started, tv_diff, xs, ys);
 
-    // send_binary(ZERO, timeoffset, tv_started, tv_diff, xs, ys);
+    send_binary(ZERO, timeoffset, tv_started, tv_diff, xs, ys);
     //  send_binary(ONE, timeoffset, tv_started, tv_diff, xs, ys);
     //  send_binary(POS, timeoffset, tv_started, tv_diff, xs, ys);
 
-    send_signal(SIGNAL_MARK, OFFSET_MARK, timeoffset, tv_started, tv_diff, xs, ys);
+    //send_signal(SIGNAL_MARK, OFFSET_MARK, timeoffset, tv_started, tv_diff, xs, ys);
 
 #ifdef __arm__
     // close(i2c_fd);
