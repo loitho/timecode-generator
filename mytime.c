@@ -442,7 +442,7 @@ int main()
         //  MAX: echo -ne "\x3F\xFF" > /dev/spidev0.0
         printf("SPI initiated\n");
 
-        SpiWriteAndRead(spi, &buf[0], &buf[0], 2, false); // Transfer buffer data to SPI call
+        //SpiWriteAndRead(spi, &buf[0], &buf[0], 2, false); // Transfer buffer data to SPI call
     }
     else
     {
@@ -481,7 +481,7 @@ int main()
     send_signal(SIGNAL_MARK, OFFSET_MARK, timeoffset, tv_started, tv_diff, xs, ys);
 
 #ifdef __arm__
-    close(i2c_fd);
+    // close(i2c_fd);
     SpiClosePort(spi);
 
 #endif
