@@ -472,8 +472,8 @@ int main(int argc, char *argv[])
         ret = spiWrite(spi, &buf[0], 2);
         printf("Return value for SPIWrite : %d\n", ret);
 
-        ret = spiXfer(spi, &buf[0], NULL, 2);
-        printf("Return value for SPIReadWrite : %d\n", ret);
+        //ret = spiXfer(spi, &buf[0], NULL, 2);
+        //printf("Return value for SPIReadWrite : %d\n", ret);
 
         // exit(0);
     }
