@@ -18,6 +18,8 @@
 
 #include "spi.h"
 
+#define SPI_SPEED 5000000
+
 #define GRAPH 1
 #define ARRAY_SIZE 200000
 
@@ -422,7 +424,7 @@ int main()
 
 #ifdef __arm__
     // 5 MHz
-    spi = SpiOpenPort(0, 8, 5000000, 0, false);
+    spi = SpiOpenPort(0, 8, SPI_SPEED, 0, false);
     // uint16_t data = arg1 % 4096;
 
     // uint8_t buf[2] = {
