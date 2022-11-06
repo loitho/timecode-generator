@@ -433,6 +433,8 @@ int main(int argc, char *argv[])
 
 #ifdef __arm__
 
+    printf("ARM Only\n");
+
     if (gpioInitialise() < 0)
     {
         // pigpio initialisation failed.
