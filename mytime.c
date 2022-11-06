@@ -32,7 +32,7 @@
 #define SLEEP_NS 4000
 
 #define SLEEP_ADJUST 1
-#define SLEEP_ADJUST_CYCLE 50
+#define SLEEP_ADJUST_CYCLE 20
 
 // MCP4725 uses values from 0 to 4095.
 // 0    => 0   Volts
@@ -420,7 +420,7 @@ void send_data(uint64_t *timeoffset,
 
 int main(int argc, char *argv[])
 {
-    if (argc == 1)
+    if (argc == 2)
     {
         printf("Selecting sleep period from CLI");
         sleep_period_nsec = atoi(argv[1]);
