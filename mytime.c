@@ -420,10 +420,10 @@ void send_data(uint64_t *timeoffset,
 
 int main(int argc, char *argv[])
 {
-    if (argc <= 1)
+    if (argc == 1)
     {
-        printf("You did not feed me arguments, I will die now :( ...");
-        exit(1);
+        printf("Selecting sleep period from CLI");
+        sleep_period_nsec = atoi(argv[1]);
     }                         // otherwise continue on our merry way....
     int arg1 = atoi(argv[1]); // argv[0] is the program name
                               // atoi = ascii to int
@@ -470,8 +470,8 @@ int main(int argc, char *argv[])
         printf(" 1er : %d, 2nd : %d\n", buf[0], buf[1]);
         printf(" 1er : %04X, 2nd : %04X\n", buf[0], buf[1]);
 
-        ret = spiWrite(spi, &buf[0], 2);
-        printf("Return value for SPIWrite : %d\n", ret);
+        // ret = spiWrite(spi, &buf[0], 2);
+        // printf("Return value for SPIWrite : %d\n", ret);
 
         //ret = spiXfer(spi, &buf[0], NULL, 2);
         //printf("Return value for SPIReadWrite : %d\n", ret);
