@@ -10,14 +10,11 @@
 #include "mytime.h"
 
 #ifdef __arm__
-#include <wiringPiI2C.h>
 #include <stdio.h>
-#include <wiringPi.h>
 #include <errno.h>
+#include <pigpio.h>
 #endif
 
-#include "spi.h"
-#include <pigpio.h>
 
 #define SPI_SPEED 2000000
 
@@ -34,7 +31,7 @@
 // 7000 / 6932 seems OK for Raspy
 #define SLEEP_NS 4000
 
-#define SLEEP_ADJUST 0
+#define SLEEP_ADJUST 1
 
 // MCP4725 uses values from 0 to 4095.
 // 0    => 0   Volts
@@ -155,10 +152,10 @@ void send_signal(float signal_type,
         xs[array_iterator] = (etime_nsec - *timeoffset + 1) / DIV_TO_GRAPH_MS;
 
         // Graph with a +3.3V Max display
-        // ys[array_iterator] = dac_value / 4095.0 * 3.3;
+        ys[array_iterator] = dac_value / 4095.0 * 3.3;
 
         // Graph the DAC value sent to the chip
-        ys[array_iterator] = dac_value;
+        //ys[array_iterator] = dac_value;
 #endif
 
 #ifdef __arm__
@@ -192,7 +189,7 @@ void send_signal(float signal_type,
             // looptime++;
         }
         sleepcounter = 0;
-        usleep(100000);
+        //usleep(100000);
     }
 }
 
