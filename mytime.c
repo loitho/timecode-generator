@@ -34,7 +34,7 @@
 // 7000 / 6932 seems OK for Raspy
 #define SLEEP_NS 4000
 
-#define SLEEP_ADJUST 1
+#define SLEEP_ADJUST 0
 
 // MCP4725 uses values from 0 to 4095.
 // 0    => 0   Volts
@@ -137,7 +137,7 @@ void send_signal(float signal_type,
     // Min 0, Max 4095
     int dac_value = 0;
 
-    uint8_t buf[2];
+    char buf[2];
 
     for (int i = 0; i < 256; i++)
     {
@@ -169,8 +169,11 @@ void send_signal(float signal_type,
         // SPI
         buf[0] = 0x30 + (uint8_t)(dac_value >> 8);
         buf[1] = 0x00 + (dac_value & 0xff);
-        // SpiWriteAndRead(spi, &buf[0], &buf[0], 2, false); // Transfer buffer data to SPI call
-        // SpiWriteBlockRepeat (spi, &buf[0], 2, 1, true);
+        if (spiWrite(spi, &buf[0], 2) != 2)
+            printf("SPI Communication ERROR\n");
+
+            // SpiWriteAndRead(spi, &buf[0], &buf[0], 2, false); // Transfer buffer data to SPI call
+            // SpiWriteBlockRepeat (spi, &buf[0], 2, 1, true);
 #endif
 
         // printf("i2c value : %d, real value: %lf\n", dac_value, (DACLookup_FullSine_8Bit[i] * signal_type + signal_offset));
@@ -189,6 +192,7 @@ void send_signal(float signal_type,
             // looptime++;
         }
         sleepcounter = 0;
+        usleep(100000);
     }
 }
 
@@ -452,13 +456,6 @@ int main(int argc, char *argv[])
     spi = spiOpen(0, SPI_SPEED, 0);
     uint16_t data = arg1 % 4096;
 
-    // uint8_t buf[2] = {
-    //     0x30 + (uint8_t)(data >> 8),
-    //     0x00 + (data & 0xff)};
-
-    // printf(" 1er : %d, 2nd : %d\n", buf[0], buf[1]);
-    // printf(" 1er : %04X, 2nd : %04X\n", buf[0], buf[1]);
-
     if (spi >= 0)
     {
         // int data = 4095;
@@ -475,15 +472,13 @@ int main(int argc, char *argv[])
         printf(" 1er : %d, 2nd : %d\n", buf[0], buf[1]);
         printf(" 1er : %04X, 2nd : %04X\n", buf[0], buf[1]);
 
-        // ret = spiWrite(spi, &buf[0], 2);
-        // printf("Return value for SPIWrite : %d\n", ret);
-
-        ret = spiXfer(spi, &buf[0], NULL, 2);
+        ret = spiWrite(spi, &buf[0], 2);
         printf("Return value for SPIWrite : %d\n", ret);
 
-        // SpiWriteAndRead(spi, &buf[0], &buf[0], 2, false); // Transfer buffer data to SPI call
+        ret = spiXfer(spi, &buf[0], NULL, 2);
+        printf("Return value for SPIReadWrite : %d\n", ret);
 
-        exit(0);
+        // exit(0);
     }
     else
     {
